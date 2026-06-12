@@ -420,11 +420,14 @@
     const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const getFracOpts = (sel) => optsFractions.map(f => `<option value="${f}" ${f===sel?'selected':''}>${f===''?'':f}</option>`).join('');
 
-    // --- INDEXEDDB WRAPPER ---
+    // --- INDEXEDDB WRAPPER & SAFARI PRIVATE MODE SAFEGUARD ---
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
-            request.onerror = () => reject("DB Error");
+            request.onerror = (e) => {
+                alert("⚠️ Storage Blocked! If you are using Safari Private Browsing, you must switch to normal mode to save measurements and photos.");
+                reject("DB Error");
+            };
             request.onsuccess = (e) => { db = e.target.result; resolve(db); };
             request.onupgradeneeded = (e) => {
                 db = e.target.result;
@@ -444,7 +447,9 @@
     }
 
     async function loadFromDB(key) {
-        if(!db) await initDB();
+        if(!db) {
+            try { await initDB(); } catch(e) { return null; }
+        }
         return new Promise((resolve, reject) => {
             const tx = db.transaction(STORE_NAME, 'readonly');
             const req = tx.objectStore(STORE_NAME).get(key);
@@ -455,9 +460,10 @@
 
     // --- INITIALIZATION ---
     window.onload = async function() { 
-        await initDB();
+        try { await initDB(); } catch(e) { console.error(e); }
+        
         const oldData = localStorage.getItem('SimplyDoors_Unified_v13');
-        if(oldData) {
+        if(oldData && db) {
             try {
                 await saveToDB('current_job', JSON.parse(oldData));
                 localStorage.removeItem('SimplyDoors_Unified_v13');
@@ -608,45 +614,53 @@
                 <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
             </div>
             
-            <div class="row">
-                <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
-                <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
-            </div>
-
-            <label>Dimensions</label>
-            <div class="row">
-                <div class="col print-group" style="flex: 1.2;">
-                    <span class="sub-label">Type</span>
-                    <select class="save-me-dynamic door-input">
-                        <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
-                        <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
-                        <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
-                    </select>
-                </div>
-                <div class="col print-group" style="flex: 2;">
-                    <span class="sub-label">Width</span>
-                    <div class="composite-input">
-                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
-                        <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
-                    </div>
-                </div>
-                <div class="col print-group" style="flex: 2;">
-                    <span class="sub-label">Height</span>
-                    <div class="composite-input">
-                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
-                        <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
-                    </div>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
+                    <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
-                <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
+            <div class="print-group">
+                <label>Dimensions</label>
+                <div class="row">
+                    <div class="col" style="flex: 1.2;">
+                        <span class="sub-label">Type</span>
+                        <select class="save-me-dynamic door-input">
+                            <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
+                            <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
+                            <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
+                        </select>
+                    </div>
+                    <div class="col" style="flex: 2;">
+                        <span class="sub-label">Width</span>
+                        <div class="composite-input">
+                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
+                            <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
+                        </div>
+                    </div>
+                    <div class="col" style="flex: 2;">
+                        <span class="sub-label">Height</span>
+                        <div class="composite-input">
+                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
+                            <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-group">
+                <div class="row">
+                    <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
+                    <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
+                </div>
             </div>
             
-            <div class="row">
-                <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
-                <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
+                    <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
+                </div>
             </div>
 
             <div class="print-group">
@@ -692,14 +706,16 @@
                 <button class="btn-delete" onclick="deleteItem('${id}')">×</button>
             </div>
 
-            <div class="row">
-                <div class="col print-group" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
-                <div class="col print-group"><label>Floor</label><select class="save-me-dynamic win-input">
-                    <option ${vals.floor==='1st'?'selected':''}>1st</option>
-                    <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
-                    <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
-                </select></div>
-                <div class="col print-group" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
+                    <div class="col"><label>Floor</label><select class="save-me-dynamic win-input">
+                        <option ${vals.floor==='1st'?'selected':''}>1st</option>
+                        <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
+                        <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
+                    </select></div>
+                    <div class="col" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
+                </div>
             </div>
 
             <div class="print-group">
@@ -714,53 +730,59 @@
                 <button type="button" class="btn-add-point" onclick="addMeasureRow('${id}')">+ Add Point</button>
             </div>
 
-            <div class="row">
-                <div class="col print-group">
-                    <label>Floor to Sill</label>
-                    <div class="composite-input">
-                        <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
-                        <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col">
+                        <label>Floor to Sill</label>
+                        <div class="composite-input">
+                            <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
+                            <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
+                        </div>
                     </div>
-                </div>
-                <div class="col print-group" style="flex: 0.6;">
-                    <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
-                        <div class="win-toggle-label">Tempered</div>
-                        <label class="win-switch">
-                            <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
-                            <span class="slider"></span>
-                            <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
-                        </label>
+                    <div class="col" style="flex: 0.6;">
+                        <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
+                            <div class="win-toggle-label">Tempered</div>
+                            <label class="win-switch">
+                                <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
+                                <span class="slider"></span>
+                                <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div class="col">
-                    ${renderWallThickField(vals.wall, vals.wall_f)}
+                    <div class="col">
+                        ${renderWallThickField(vals.wall, vals.wall_f)}
+                    </div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col print-group"><label>Material</label><select class="save-me-dynamic win-input">
-                    <option value="" ${vals.mat===''?'selected':''}>Select...</option>
-                    <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
-                    <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
-                </select></div>
-                <div class="col print-group"><label>Frame Depth</label><select class="save-me-dynamic win-input">
-                    <option value="" ${vals.frame===''?'selected':''}>Select...</option>
-                    <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
-                    <option ${vals.frame==='6"'?'selected':''}>6"</option>
-                </select></div>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col"><label>Material</label><select class="save-me-dynamic win-input">
+                        <option value="" ${vals.mat===''?'selected':''}>Select...</option>
+                        <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
+                        <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
+                    </select></div>
+                    <div class="col"><label>Frame Depth</label><select class="save-me-dynamic win-input">
+                        <option value="" ${vals.frame===''?'selected':''}>Select...</option>
+                        <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
+                        <option ${vals.frame==='6"'?'selected':''}>6"</option>
+                    </select></div>
+                </div>
             </div>
             
-            <div class="row">
-                <div class="col print-group"><label>Ext Trim</label><select class="save-me-dynamic win-input">
-                    <option value="" ${vals.ext===''?'selected':''}>Select...</option>
-                    <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
-                    <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
-                </select></div>
-                <div class="col print-group"><label>Int Trim</label><select class="save-me-dynamic win-input">
-                    <option value="" ${vals.int===''?'selected':''}>Select...</option>
-                    <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
-                    <option ${vals.int==='Casing'?'selected':''}>Casing</option>
-                </select></div>
+            <div class="print-group">
+                <div class="row">
+                    <div class="col"><label>Ext Trim</label><select class="save-me-dynamic win-input">
+                        <option value="" ${vals.ext===''?'selected':''}>Select...</option>
+                        <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
+                        <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
+                    </select></div>
+                    <div class="col"><label>Int Trim</label><select class="save-me-dynamic win-input">
+                        <option value="" ${vals.int===''?'selected':''}>Select...</option>
+                        <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
+                        <option ${vals.int==='Casing'?'selected':''}>Casing</option>
+                    </select></div>
+                </div>
             </div>
 
             <div class="print-group">
@@ -929,17 +951,19 @@
                 card.querySelectorAll('.checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
 
                 const getWallVal = () => {
-                    const preset = inps[7]; 
+                    // SAFER EXTRACTION: Using targeted classes instead of array indexing
+                    const preset = card.querySelector('.wall-preset'); 
                     const customWrap = card.querySelector('.wall-custom');
                     const customWhole = customWrap.querySelector('input');
                     const customFrac = customWrap.querySelectorAll('select')[0]; 
                     
-                    if (preset.value && preset.value !== 'Custom') {
+                    if (preset && preset.value && preset.value !== 'Custom') {
                         const parts = preset.value.split(' ');
                         return { w: parts[0], f: parts[1] || '' };
-                    } else {
+                    } else if(customWhole) {
                         return { w: customWhole.value, f: customFrac.value };
                     }
+                    return { w: '', f: '' };
                 };
                 
                 const wallVals = getWallVal();
@@ -1087,6 +1111,14 @@
                 a.download = filename;
                 a.click();
             }
+        }).catch(err => {
+            // Error Safeguard if iPad runs out of memory processing PDF
+            console.error("PDF Generation Error", err);
+            alert("⚠️ Error generating PDF. The device memory may be full or the images are too large. Please restart the app and try again.");
+            techInfoDiv.innerHTML = ""; 
+            document.querySelectorAll('.hide-in-print').forEach(el => el.classList.remove('hide-in-print'));
+            document.body.classList.remove('printing-mode');
+            btn.innerText = oldText;
         });
     }
 
