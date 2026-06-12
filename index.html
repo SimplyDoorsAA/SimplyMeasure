@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SimplyDoors">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Professional Measurement Tool for SimplyDoors">
+<title>SimplyDoors Measure App</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+    /* =========================================
+       1. VARIABLES & GLOBAL RESET
+       ========================================= */
+    :root {
+        --brand-green: #7bc043;
+        --brand-dark: #2c3e50;
+        --brand-bg: #f4f7f6;
+        --brand-white: #ffffff;
+        --ui-blue: #007bff;
+        --ui-danger: #dc3545;
+        --shadow-card: 0 4px 20px rgba(0,0,0,0.06);
+        --radius: 12px;
+        --alert-red: #ff0000;
+        --gray-container: #f8f9fa;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        background-color: var(--brand-bg);
+        margin: 0; padding: 0; 
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: 160px; /* Space for footer */
+        color: #333;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .main-wrapper { padding: 15px; max-width: 850px; margin: 0 auto; }
+    .container { 
+        background: var(--brand-white); border-radius: var(--radius); 
+        box-shadow: var(--shadow-card); overflow: hidden; min-height: 80vh; padding-bottom: 40px;
+    }
+
+    /* =========================================
+       2. HEADER
+       ========================================= */
+    .app-header {
+        background: var(--brand-white);
+        padding-top: calc(15px + env(safe-area-inset-top)); 
+        padding-bottom: 20px; padding-left: 20px; padding-right: 20px;
+        text-align: center;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+        border-bottom: 4px solid var(--brand-green);
+        position: sticky; top: 0; z-index: 900;
+    }
+    .logo-container img { height: 55px; width: auto; display: inline-block; }
+    .logo-text { font-size: 28px; font-weight: 800; color: var(--brand-dark); display: none; letter-spacing: -0.5px; line-height: 1; }
+    .logo-text span { color: var(--brand-green); }
+    .app-subtitle { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-top: 6px; }
+
+    /* =========================================
+       3. UI COMPONENTS (Inputs, Modals, Toasts)
+       ========================================= */
+    /* Modal */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+        z-index: 2000; display: none; align-items: center; justify-content: center;
+    }
+    .modal-box {
+        background: white; width: 90%; max-width: 400px; padding: 30px; 
+        border-radius: 16px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--brand-dark); }
+    .modal-btn-row { display: flex; gap: 15px; }
+    .modal-btn {
+        flex: 1; padding: 20px; border-radius: 12px; border: 2px solid #eee;
+        background: #f8f9fa; font-size: 16px; font-weight: 700; cursor: pointer;
+        transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .modal-btn:active { transform: scale(0.95); }
+    .modal-btn.is-door { color: var(--brand-green); border-color: var(--brand-green); background: #f0fff4; }
+    .modal-btn.is-door svg { width: 30px; height: 30px; fill: var(--brand-green); }
+    .modal-btn.is-window { color: var(--ui-blue); border-color: var(--ui-blue); background: #f0f7ff; }
+    .modal-btn.is-window svg { width: 30px; height: 30px; fill: var(--ui-blue); }
+
+    /* Save Toast */
+    .save-indicator {
+        position: fixed; top: 20px; right: 20px; font-size: 12px; font-weight: 700;
+        background: var(--brand-green); color: white; padding: 8px 16px; border-radius: 30px;
+        opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+        margin-top: env(safe-area-inset-top); 
+    }
+    .save-indicator.error { background: var(--ui-danger); }
+
+    .empty-state {
+        text-align: center; padding: 60px 20px; color: #a0aec0;
+        border: 2px dashed #e2e8f0; border-radius: 12px; margin: 20px; background: #fafbfc;
+    }
+    
+    /* Standard Inputs */
+    .section { padding: 25px 20px; border-bottom: 1px solid #f0f0f0; }
+    .section-title { font-size: 14px; color: var(--brand-dark); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 15px; margin-top: 10px; }
+    .row { display: flex; gap: 15px; align-items: flex-end; }
+    .col { flex: 1; min-width: 0; }
+    label { display: block; margin-top: 18px; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    input:not([type="checkbox"]), select, textarea { 
+        width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px;
+        font-size: 16px; background: #fff; color: #2d3748; -webkit-appearance: none; appearance: none; 
+    }
+    select:invalid, select option[value=""] { color: var(--ui-blue); font-weight: 600; }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.4; }
+    .sub-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #a0aec0; margin-bottom: 4px; display: block; }
+
+    /* Composite Input (Optimized for Mobile) */
+    .composite-input { display: flex; align-items: center; width: 100%; }
+    .composite-input input { 
+        border-top-right-radius: 0; border-bottom-right-radius: 0; 
+        flex: 1.5; min-width: 0; z-index: 2; 
+    }
+    .composite-input select { 
+        border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; 
+        background-color: #f8f9fa; font-weight: 500; text-align: center; 
+        flex: 1; min-width: 65px; padding-left: 5px; padding-right: 5px;
+    }
+
+    /* Custom Toggles */
+    .toggle-wrapper { position: relative; width: 100%; }
+    .custom-input-group { display: flex; gap: 8px; align-items: center; }
+    .undo-btn { background: #edf2f7; color: #718096; border: none; width: 46px; height: 48px; border-radius: 8px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    
+    /* Checklist */
+    .checklist-container { background-color: var(--gray-container); border-radius: 10px; padding: 10px 15px; margin-top: 5px; border: 1px solid #edf2f7; }
+    .checklist-item { display: flex; align-items: center; padding: 12px 0; cursor: pointer; user-select: none; }
+    .checklist-item.active .custom-checkbox { background-color: #333; border-color: #333; }
+    .checklist-item.active .custom-checkbox::after { content: '✓'; color: white; font-size: 18px; font-weight: 800; }
+    .custom-checkbox { width: 24px; height: 24px; border: 2px solid #ccc; border-radius: 6px; margin-right: 12px; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .checklist-text { font-size: 14px; font-weight: 600; color: #555; }
+
+    /* Tempered Toggle */
+    .win-toggle-wrap { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+    .win-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .win-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--alert-red); }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .win-toggle-label { font-size: 11px; font-weight: 800; color: #888; margin-bottom: 8px; text-transform: uppercase; }
+    .win-toggle-wrap.is-tempered .win-toggle-label { color: var(--alert-red); }
+
+    /* Dynamic Rows */
+    .measure-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+    .remove-row { color: #e53e3e; font-weight: bold; padding: 10px; cursor: pointer; font-size: 20px; }
+    .btn-add-point { background: none; border: 2px dashed #cbd5e0; width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-top: 5px; color: #555; }
+
+    /* Photos */
+    .photo-grid { display: flex; gap: 10px; margin-top: 10px; }
+    .photo-box {
+        flex: 1; height: 120px; border: 2px dashed #cbd5e0; border-radius: 10px;
+        background-color: #f7fafc; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; position: relative; overflow: hidden;
+    }
+    .photo-box.has-image { border: 2px solid var(--brand-green); background-color: #fff; }
+    .photo-box input[type="file"] { display: none; }
+    .photo-placeholder { text-align: center; font-size: 11px; font-weight: 600; color: #718096; pointer-events: none; }
+    .photo-preview { width: 100%; height: 100%; object-fit: cover; display: none; max-width: 100%; }
+    .photo-spinner { display: none; border: 3px solid #f3f3f3; border-top: 3px solid var(--brand-green); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* Photo Clear Button */
+    .photo-clear {
+        display: none; position: absolute; top: 5px; right: 5px; background: rgba(220, 53, 69, 0.9);
+        color: white; border-radius: 50%; width: 26px; height: 26px; text-align: center;
+        line-height: 24px; cursor: pointer; z-index: 10; font-weight: bold; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .photo-box.has-image .photo-clear { display: block; }
+
+    /* Cards */
+    .measure-card {
+        background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+        padding: 25px; margin-bottom: 30px; position: relative;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .measure-card[data-type="door"] { border-left: 6px solid var(--brand-green); }
+    .measure-card[data-type="window"] { border-left: 6px solid var(--ui-blue); }
+
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .card-badge { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: white; }
+    .measure-card[data-type="door"] .card-badge { background: var(--brand-green); }
+    .measure-card[data-type="window"] .card-badge { background: var(--ui-blue); }
+    .btn-delete { background: #fff1f2; color: #e53e3e; border: none; width: 36px; height: 36px; border-radius: 50%; font-weight: bold; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .pdf-brand { display: none; }
+
+    /* Footer Buttons */
+    .btn-group { 
+        padding: 15px 20px; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+        position: fixed; bottom: 0; left: 0; right: 0; border-top: 1px solid #e2e8f0; 
+        box-shadow: 0 -4px 25px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 10px;
+        z-index: 999; padding-bottom: calc(15px + env(safe-area-inset-bottom));
+    }
+    button.action-btn { 
+        flex: 1; padding: 16px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; 
+        cursor: pointer; color: white; text-align: center; min-width: 100px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.1s;
+    }
+    button.action-btn:active { transform: scale(0.98); }
+    .btn-add { background-color: var(--brand-dark); } 
+    .btn-dup { background-color: #6f42c1; } 
+    .btn-print { background-color: var(--ui-blue); } 
+    .btn-reset { background-color: var(--ui-danger); flex-basis: 100%; margin-top: 5px; opacity: 0.9; font-size: 13px; padding: 12px; }
+
+    /* =========================================
+       4. PRINTING MODE (PDF ENGINE)
+       ========================================= */
+    /* Basic Page Setup */
+    .printing-mode body { background: white; margin: 0; padding: 0 !important; }
+    .printing-mode .main-wrapper { padding: 0; width: 750px; margin: 0 auto; }
+    .printing-mode .container { box-shadow: none; border: none; border-radius: 0; padding: 0; min-height: auto; }
+    
+    /* Hide App UI in PDF */
+    .printing-mode .btn-group, .printing-mode .btn-delete, .printing-mode .save-indicator, 
+    .printing-mode .undo-btn, .printing-mode .app-header, .printing-mode .btn-add-point, 
+    .printing-mode .remove-row, .printing-mode .empty-state, .printing-mode .modal-overlay,
+    .printing-mode .photo-clear, .printing-mode .photo-placeholder { display: none !important; }
+
+    /* Cover Page */
+    .printing-mode .job-cover-page {
+        display: block; width: 100%; padding: 40px;
+        height: auto; min-height: 90vh;
+        page-break-after: always; break-after: page; border-bottom: none;
+    }
+    .printing-mode .cover-header { 
+        text-align: center; margin-bottom: 40px; 
+        border-bottom: 4px solid var(--brand-green); padding-bottom: 20px;
+    }
+    .printing-mode .cover-header h1 { font-size: 42px; color: var(--brand-dark); margin: 0; }
+    .printing-mode .cover-header p { font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 4px; margin-top: 5px; }
+    .printing-mode .cover-box { border: 2px solid #333; padding: 25px; border-radius: 8px; background: #fff; margin-bottom: 30px; }
+    
+    /* Dynamic Tech Info (Visible only in PDF) */
+    .printing-mode .tech-info-print {
+        margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;
+        font-size: 13px; line-height: 1.6; color: #444; display: block !important;
+    }
+    .printing-mode .tech-info-print strong { color: var(--brand-dark); }
+
+    /* Measure Cards - ANTI-BLEED CONFIG */
+    .printing-mode .measure-card {
+        box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; 
+        margin-bottom: 30px;
+        display: block; 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+    }
+    .printing-mode .pdf-brand { 
+        display: block; text-align: right; color: #aaa; font-size: 12px; 
+        text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
+    }
+    
+    /* Input Styling for Print */
+    .printing-mode label { margin-top: 15px; font-size: 11px; color: #666; text-transform: uppercase; }
+    .printing-mode input, .printing-mode select {
+        border: none; border-bottom: 1px solid #000; border-radius: 0; padding: 4px 0; 
+        font-weight: 700; font-size: 14px; background: transparent; color: #000; margin-bottom: 5px;
+    }
+    .printing-mode textarea { border: 1px solid #ddd; padding: 10px; font-size: 12px; margin-top: 5px; }
+    
+    /* Print Tweaks */
+    .printing-mode .composite-input select { width: auto; min-width: 50px; margin-left: 5px; }
+    .printing-mode .checklist-container { background: transparent; border: none; padding: 0; margin-top: 10px;}
+    .printing-mode .checklist-item:not(.active) { display: none; }
+    .printing-mode .checklist-item { padding: 2px 0; }
+    .printing-mode .custom-checkbox { border: none; width: auto; background: transparent; margin-right: 8px; }
+    .printing-mode .custom-checkbox:after { content: "☑"; color: black; font-size: 18px; }
+    
+    /* Print Images - Anti-Distortion Config */
+    .printing-mode .photo-grid { 
+        display: block; margin-top: 15px; overflow: hidden; white-space: nowrap;
+    }
+    .printing-mode .photo-box { 
+        display: inline-block;
+        width: 31%; 
+        height: auto; 
+        min-height: 150px;
+        margin-right: 2%; 
+        vertical-align: top;
+        border: none; 
+        background: transparent;
+    }
+    .printing-mode .photo-box:last-child { margin-right: 0; }
+    .printing-mode .photo-box:not(.has-image) { opacity: 0.1; border: 1px dashed #ccc; min-height: 150px; }
+    .printing-mode .photo-preview { 
+        display: block !important; 
+        width: 100%; 
+        height: auto; 
+        max-height: 220px; 
+        object-fit: contain; /* Prevents squashing/stretching */
+    }
+    
+    .printing-mode .tempered-print-only { display: block !important; font-weight: 900; color: var(--alert-red); border: 3px solid var(--alert-red); padding: 10px; text-align: center; margin-top: 20px; font-size: 16px; }
+    .printing-mode .win-switch, .printing-mode .slider, .signature-line { display: none; }
+    
+    /* Ensure signature line is hidden as requested */
+    .signature-line { display: none !important; } 
+</style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="logo-container">
+        <img src="logo.png" alt="SimplyDoors" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
+        <div class="logo-text">Simply<span>Doors</span></div>
+    </div>
+    <div class="app-subtitle">SimplyDoors Measure App</div>
+</header>
+
+<div class="save-indicator" id="saveMsg">Saved</div>
+
+<div class="modal-overlay" id="typeModal" onclick="closeModal(event)">
+    <div class="modal-box">
+        <div class="modal-title">Select Item Type</div>
+        <div class="modal-btn-row">
+            <div class="modal-btn is-door" onclick="selectType('door')">
+                <svg viewBox="0 0 24 24"><path d="M8 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H8zm8 16H8V5h8v14zm-2-8h-2v2h2v-2z"/></svg>
+                Door
+            </div>
+            <div class="modal-btn is-window" onclick="selectType('window')">
+                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-9-2h2v-2h-2v2zm0-4h2v-2h-2v2zm0-4h2V7h-2v2z"/></svg>
+                Window
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <div class="container" id="pdf-content">
+        
+        <div class="job-cover-page">
+            <div class="cover-header">
+                <h1>SimplyDoors</h1>
+                <p>Field Measurement Sheet</p>
+            </div>
+
+            <div class="section cover-box">
+                <div class="section-title">Project Details</div>
+                <label>Customer Name <span style="color:red">*</span></label>
+                <input type="text" class="save-me" placeholder="Enter Customer Name" id="cust_name" autocomplete="off">
+                
+                <div class="row">
+                    <div class="col">
+                        <label>PO / Reference #</label>
+                        <input type="text" class="save-me" id="po_num" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section cover-box">
+                 <div class="section-title">Technician Info</div>
+                <div class="row">
+                    <div class="col">
+                        <label>Date</label>
+                        <input type="date" class="save-me" id="dateField">
+                    </div>
+                    <div class="col">
+                        <label>Measured By</label>
+                         <select class="save-me" id="techSelect">
+                            <option value="" disabled selected>Select Tech...</option>
+                            <option value="Adem Atis">Adem Atis</option>
+                            <option value="Damian Azpurua">Damian Azpurua</option>
+                            <option value="John Suttin">John Suttin</option>
+                            <option value="Steven Chandler">Steven Chandler</option>
+                            <option value="Isaiah Stratton">Isaiah Stratton</option>
+                            <option value="Paz Galambos">Paz Galambos</option>
+                            <option value="Alan Lloyd">Alan Lloyd</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="tech-info-print" id="pdf-tech-info" style="display:none;"></div>
+            </div>
+
+            <div style="margin-top: 40px; font-size: 12px; color: #999; text-align: center;">
+                www.simplydoors.com | Professional Measurement Services
+            </div>
+        </div>
+
+        <div id="measure-container"></div>
+    </div>
+</div>
+
+<div class="btn-group">
+    <button type="button" class="action-btn btn-add" onclick="openModal()">+ Add New</button>
+    <button type="button" class="action-btn btn-dup" onclick="duplicateLast()">+ Copy Last</button>
+    <button type="button" class="action-btn btn-print" id="pdfBtn" onclick="downloadPDF()">Save PDF</button>
+    <button type="button" class="action-btn btn-reset" onclick="startNewJob()">Start New Job</button>
+</div>
+
+<script>
+    // --- CONFIG & STATE ---
+    const container = document.getElementById('measure-container');
+    const saveMsg = document.getElementById('saveMsg');
+    const modal = document.getElementById('typeModal');
+    
+    // DB Configuration
+    const DB_NAME = 'SimplyDoorsDB';
+    const STORE_NAME = 'jobs';
+    let db;
+    let saveTimeout;
+
+    // --- TECH CONTACT DATABASE ---
+    const techDatabase = {
+        "Adem Atis": { phone: "210-870-9083", email: "adem@simplydoors.com" },
+        "Damian Azpurua": { phone: "(726) 437-5380", email: "DamianAzpuruausa@gmail.com" },
+        "John Suttin": { phone: "", email: "" }, 
+        "Steven Chandler": { phone: "", email: "" },
+        "Isaiah Stratton": { phone: "", email: "" },
+        "Paz Galambos": { phone: "", email: "" },
+        "Alan Lloyd": { phone: "", email: "" }
+    };
+
+    // Prevent accidental tab closure
+    window.addEventListener('beforeunload', function (e) { e.preventDefault(); e.returnValue = ''; });
+
+    const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
+    const getFracOpts = (sel) => optsFractions.map(f => `<option value="${f}" ${f===sel?'selected':''}>${f===''?'':f}</option>`).join('');
+
+    // --- INDEXEDDB WRAPPER ---
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onerror = (e) => reject("DB Error");
+            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                db.createObjectStore(STORE_NAME);
+            };
+        });
+    }
+
+    async function saveToDB(key, data) {
+        if(!db) await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(data, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject();
+        });
+    }
+
+    async function loadFromDB(key) {
+        if(!db) await initDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const req = tx.objectStore(STORE_NAME).get(key);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject();
+        });
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = async function() { 
+        await initDB();
+        // Migrate old LocalStorage data if exists
+        const oldData = localStorage.getItem('SimplyDoors_Unified_v13');
+        if(oldData) {
+            try {
+                await saveToDB('current_job', JSON.parse(oldData));
+                localStorage.removeItem('SimplyDoors_Unified_v13');
+                console.log("Migrated data to IndexedDB.");
+            } catch(e) { console.error("Migration failed", e); }
+        }
+        await loadData(); 
+    };
+
+    // --- MODAL HANDLING ---
+    function openModal() { modal.style.display = 'flex'; }
+    function closeModal(e) { if(e.target === modal) modal.style.display = 'none'; }
+    function selectType(type) {
+        modal.style.display = 'none';
+        if(type === 'door') addDoor();
+        else addWindow();
+    }
+
+    // --- RENDER HELPERS ---
+    function renderPhotoBox(num, dataUrl) {
+        const hasImg = dataUrl ? 'has-image' : '';
+        const imgSrc = dataUrl || '';
+        const displayImg = dataUrl ? 'block' : 'none';
+        const displayPlace = dataUrl ? 'none' : 'block';
+        return `
+        <div class="photo-box ${hasImg}" onclick="triggerFile(event, this)">
+            <div class="photo-clear" onclick="clearPhoto(event, this)">×</div>
+            <div class="photo-placeholder" style="display:${displayPlace}">📷<br>Photo ${num}</div>
+            <div class="photo-spinner"></div>
+            <img class="photo-preview" src="${imgSrc}" style="display:${displayImg}">
+            <input type="file" accept="image/*" capture="environment" onchange="processImage(this)">
+        </div>`;
+    }
+
+    function renderToggleField(label, val, options) {
+        const isCustom = val && !options.includes(val) && val !== '';
+        const selStyle = isCustom ? 'display:none' : 'display:block';
+        const inpStyle = isCustom ? 'display:flex' : 'display:none';
+        let optsHtml = '<option value="" disabled selected>Select...</option>';
+        options.forEach(opt => { optsHtml += `<option ${(opt === val) ? 'selected' : ''}>${opt}</option>`; });
+        optsHtml += `<option value="Custom">Custom (Type...)</option>`;
+
+        return `
+        <div class="toggle-field-wrapper">
+            <label>${label}</label>
+            <div class="toggle-wrapper">
+                <select class="save-me-dynamic door-input" style="${selStyle}" onchange="checkCustom(this)">${optsHtml}</select>
+                <div class="custom-input-group" style="${inpStyle}">
+                    <input type="text" class="door-input" value="${isCustom ? val : ''}" oninput="triggerSave()">
+                    <button type="button" class="undo-btn" onclick="resetToggle(this)">×</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    function checkCustom(select) {
+        if(select.value === 'Custom') {
+            const wrap = select.parentElement;
+            select.style.display = 'none';
+            wrap.querySelector('.custom-input-group').style.display = 'flex';
+            wrap.querySelector('input').focus();
+        }
+        triggerSave();
+    }
+    function resetToggle(btn) {
+        const wrap = btn.closest('.toggle-wrapper');
+        wrap.querySelector('input').value = '';
+        wrap.querySelector('select').value = '';
+        wrap.querySelector('.custom-input-group').style.display = 'none';
+        wrap.querySelector('select').style.display = 'block';
+        triggerSave();
+    }
+
+    // --- WINDOW WALL THICK TOGGLE (Smart Composite) ---
+    function renderWallThickField(valWhole, valFrac) {
+        const presets = ["4 9/16", "6 9/16", "3 1/2", "5 1/2"];
+        const currentCombined = (valWhole && valFrac) ? `${valWhole} ${valFrac}` : valWhole;
+        const isCustom = !presets.includes(currentCombined) && (valWhole !== '' || valFrac !== '');
+        
+        const selStyle = isCustom ? 'display:none' : 'display:block';
+        const inpStyle = isCustom ? 'display:flex' : 'display:none';
+        
+        let optsHtml = '<option value="" disabled selected>Select...</option>';
+        presets.forEach(p => { 
+            const sel = (p === currentCombined) ? 'selected' : '';
+            optsHtml += `<option value="${p}" ${sel}>${p}</option>`; 
+        });
+        optsHtml += `<option value="Custom">Custom (Type...)</option>`;
+
+        return `
+        <div class="wall-thick-wrapper">
+            <label>Wall Thick</label>
+            <select class="wall-preset save-me-dynamic win-input" style="${selStyle}" onchange="toggleWallThick(this)">${optsHtml}</select>
+            <div class="composite-input wall-custom" style="${inpStyle}">
+                <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${valWhole}" placeholder="0" oninput="triggerSave()">
+                <select class="save-me-dynamic win-input" onchange="triggerSave()">${getFracOpts(valFrac)}</select>
+                <button type="button" class="undo-btn" onclick="resetWallThick(this)" style="margin-left:5px; height:42px; width:40px;">×</button>
+            </div>
+        </div>`;
+    }
+
+    function toggleWallThick(select) {
+        if(select.value === 'Custom') {
+            const wrap = select.parentElement;
+            select.style.display = 'none';
+            wrap.querySelector('.wall-custom').style.display = 'flex';
+        }
+        triggerSave();
+    }
+
+    function resetWallThick(btn) {
+        const wrap = btn.closest('.wall-thick-wrapper');
+        const sel = wrap.querySelector('.wall-preset');
+        const customDiv = wrap.querySelector('.wall-custom');
+        customDiv.style.display = 'none';
+        sel.style.display = 'block';
+        sel.value = "";
+        customDiv.querySelector('input').value = "";
+        customDiv.querySelectorAll('select')[0].value = "";
+        triggerSave();
+    }
+
+    const doorConfig = ['Single', 'Double', 'Sgl w/ 1 SL', 'Sgl w/ 2 SL'];
+    const doorHanding = ['Left Hand Inswing', 'Right Hand Inswing', 'Left Hand Outswing', 'Right Hand Outswing', 'Slider'];
+    
+    // --- ADD ITEMS ---
+    function addDoor(data = null) {
+        if(container.querySelector('.empty-state')) container.innerHTML = '';
+        const count = container.querySelectorAll('.measure-card').length + 1;
+        const vals = data || {
+            loc: '', config: '', handing: '', dim_type: '', 
+            w: '', w_frac: '', h: '', h_frac: '', 
+            jamb: '', bore: '', ext: '', int: '', 
+            l_tile: false, l_wood: false, l_cem: false, l_wsupp: false, l_custom: '', 
+            notes: '', p1: null, p2: null, p3: null
+        };
+        const id = 'card_' + Date.now() + Math.floor(Math.random()*1000);
+
+        const html = `
+        <div class="measure-card" id="${id}" data-type="door">
+            <div class="pdf-brand">Door Measurement</div>
+            <div class="card-header">
+                <div class="card-badge">DOOR #${count}</div>
+                <button class="btn-delete" onclick="deleteItem('${id}')">×</button>
+            </div>
+            
+            <label>Location Name</label>
+            <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
+            
+            <div class="row">
+                <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
+                <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
+            </div>
+
+            <label>Dimensions</label>
+            <div class="row">
+                <div class="col" style="flex: 1.2;">
+                    <span class="sub-label">Type</span>
+                    <select class="save-me-dynamic door-input">
+                        <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
+                        <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
+                        <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
+                    </select>
+                </div>
+                <div class="col" style="flex: 2;">
+                    <span class="sub-label">Width</span>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
+                        <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
+                    </div>
+                </div>
+                <div class="col" style="flex: 2;">
+                    <span class="sub-label">Height</span>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
+                        <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
+                <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
+            </div>
+            <div class="row">
+                <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
+                <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
+            </div>
+
+            <label>Labor Required</label>
+            <div class="checklist-container">
+                <div class="checklist-item ${vals.l_tile?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Tile</span></div>
+                <div class="checklist-item ${vals.l_wood?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Wood</span></div>
+                <div class="checklist-item ${vals.l_cem?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cement Support</span></div>
+                <div class="checklist-item ${vals.l_wsupp?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Wood Support</span></div>
+                <input type="text" class="save-me-dynamic door-input" placeholder="Custom Labor..." value="${vals.l_custom}" style="margin-top:8px;">
+            </div>
+
+            <label>Notes</label><textarea class="save-me-dynamic door-input">${vals.notes}</textarea>
+            <div class="photo-grid">
+                ${renderPhotoBox(1, vals.p1)}
+                ${renderPhotoBox(2, vals.p2)}
+                ${renderPhotoBox(3, vals.p3)}
+            </div>
+        </div>`;
+        insertAndInit(html, id, data);
+    }
+
+    function addWindow(data = null) {
+        if(container.querySelector('.empty-state')) container.innerHTML = '';
+        const count = container.querySelectorAll('.measure-card').length + 1;
+        const vals = data || {
+            loc: '', floor: '1st', qty: '1', mType: '', measurements: [{w:'',wf:'',h:'',hf:''}],
+            sill: '', sill_f: '', wall: '', wall_f: '', tempered: false, mat: '', frame: '',
+            ext: '', int: '', labor: [], customLabor: '', notes: '', p1:null, p2:null, p3:null
+        };
+        const id = 'card_' + Date.now() + Math.floor(Math.random()*1000);
+        const tempClass = vals.tempered ? 'is-tempered' : '';
+
+        const html = `
+        <div class="measure-card" id="${id}" data-type="window">
+            <div class="pdf-brand">Window Measurement</div>
+            <div class="card-header">
+                <div class="card-badge">WINDOW #${count}</div>
+                <button class="btn-delete" onclick="deleteItem('${id}')">×</button>
+            </div>
+
+            <div class="row">
+                <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
+                <div class="col"><label>Floor</label><select class="save-me-dynamic win-input">
+                    <option ${vals.floor==='1st'?'selected':''}>1st</option>
+                    <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
+                    <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
+                </select></div>
+                <div class="col" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
+            </div>
+
+            <label>Measure Points</label>
+            <select class="save-me-dynamic win-input" style="margin-bottom:10px;">
+                <option value="" disabled ${vals.mType===''?'selected':''}>Basis (RO/Unit/DO)...</option>
+                <option ${vals.mType==='Rough Opening'?'selected':''}>Rough Opening</option>
+                <option ${vals.mType==='Unit Size'?'selected':''}>Unit Size</option>
+                <option ${vals.mType==='Daylight'?'selected':''}>Daylight</option>
+            </select>
+            <div class="measure-rows-container" id="rows_${id}"></div>
+            <button type="button" class="btn-add-point" onclick="addMeasureRow('${id}')">+ Add Point</button>
+
+            <div class="row">
+                <div class="col">
+                    <label>Floor to Sill</label>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
+                        <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
+                    </div>
+                </div>
+                <div class="col" style="flex: 0.6;">
+                    <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
+                        <div class="win-toggle-label">Tempered</div>
+                        <label class="win-switch">
+                            <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
+                            <span class="slider"></span>
+                            <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="col">
+                    ${renderWallThickField(vals.wall, vals.wall_f)}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col"><label>Material</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.mat===''?'selected':''}>Select...</option>
+                    <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
+                    <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
+                </select></div>
+                <div class="col"><label>Frame Depth</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.frame===''?'selected':''}>Select...</option>
+                    <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
+                    <option ${vals.frame==='6"'?'selected':''}>6"</option>
+                </select></div>
+            </div>
+            
+            <div class="row">
+                <div class="col"><label>Ext Trim</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.ext===''?'selected':''}>Select...</option>
+                    <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
+                    <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
+                </select></div>
+                <div class="col"><label>Int Trim</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.int===''?'selected':''}>Select...</option>
+                    <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
+                    <option ${vals.int==='Casing'?'selected':''}>Casing</option>
+                </select></div>
+            </div>
+
+            <label>Labor Required</label>
+            <div class="checklist-container">
+                ${renderWinCheck('Cut Sheetrock/Wood', vals.labor)}
+                ${renderWinCheck('Cut Tile/Granite', vals.labor)}
+                ${renderWinCheck('Stucco Removal', vals.labor)}
+                <input type="text" class="save-me-dynamic win-input" placeholder="Custom Labor..." value="${vals.customLabor}" style="margin-top:8px;">
+            </div>
+
+            <label>Notes</label><textarea class="save-me-dynamic win-input">${vals.notes}</textarea>
+            <div class="photo-grid">
+                ${renderPhotoBox(1, vals.p1)}
+                ${renderPhotoBox(2, vals.p2)}
+                ${renderPhotoBox(3, vals.p3)}
+            </div>
+        </div>`;
+        
+        insertAndInit(html, id, data);
+        if(vals.measurements) vals.measurements.forEach(m => addMeasureRow(id, m.w, m.wf, m.h, m.hf));
+        else addMeasureRow(id);
+    }
+
+    function renderWinCheck(txt, arr) {
+        return `<div class="checklist-item ${arr.includes(txt)?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">${txt}</span></div>`;
+    }
+    function toggleTempered(cb) {
+        cb.closest('.win-toggle-wrap').classList.toggle('is-tempered', cb.checked);
+        triggerSave();
+    }
+    function addMeasureRow(cardId, w='', wf='', h='', hf='') {
+        const rowId = 'row_' + Date.now() + Math.floor(Math.random()*100);
+        const html = `
+        <div class="measure-row" id="${rowId}">
+            <div class="col"><div class="composite-input"><input type="text" inputmode="decimal" class="m-w" value="${w}" placeholder="W"><select class="m-wf">${getFracOpts(wf)}</select></div></div>
+            <div class="col"><div class="composite-input"><input type="text" inputmode="decimal" class="m-h" value="${h}" placeholder="H"><select class="m-hf">${getFracOpts(hf)}</select></div></div>
+            <div class="remove-row" onclick="this.closest('.measure-row').remove(); triggerSave();">&times;</div>
+        </div>`;
+        document.getElementById(`rows_${cardId}`).insertAdjacentHTML('beforeend', html);
+    }
+
+    function insertAndInit(html, id, data) {
+        container.insertAdjacentHTML('beforeend', html);
+        const card = document.getElementById(id);
+        card.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', triggerSave);
+            el.addEventListener('change', triggerSave);
+        });
+        if(!data) { 
+            setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150); 
+            triggerSave();
+        }
+    }
+
+    function toggleCheck(item) { item.classList.toggle('active'); triggerSave(); }
+    
+    function deleteItem(id) {
+        if(confirm('Delete this item?')) {
+            document.getElementById(id).remove();
+            renumber();
+            if(container.querySelectorAll('.measure-card').length === 0) renderEmptyState();
+            triggerSave();
+        }
+    }
+    function renumber() {
+        let d = 1, w = 1;
+        document.querySelectorAll('.measure-card').forEach(c => {
+            const badge = c.querySelector('.card-badge');
+            if(c.dataset.type === 'door') badge.innerText = `DOOR #${d++}`;
+            else badge.innerText = `WINDOW #${w++}`;
+        });
+    }
+
+    function renderEmptyState() {
+        container.innerHTML = `
+        <div class="empty-state">
+            <h3>Ready to Start</h3>
+            <p>Fill out Project Details above.<br>Then tap <b>+ Add New</b> to measure.</p>
+        </div>`;
+    }
+
+    async function duplicateLast() {
+        const cards = container.querySelectorAll('.measure-card');
+        if(cards.length === 0) return openModal();
+        
+        triggerSave(); 
+        const last = cards[cards.length - 1];
+        const lastType = last.dataset.type;
+        
+        const saved = await loadFromDB('current_job');
+        if(!saved || !saved.items || saved.items.length === 0) return;
+        const lastData = saved.items[saved.items.length - 1];
+        
+        const clean = JSON.parse(JSON.stringify(lastData));
+        clean.loc = ''; clean.notes = ''; clean.p1 = null; clean.p2 = null; clean.p3 = null;
+        if(lastType === 'window') { clean.measurements = [{w:'',wf:'',h:'',hf:''}]; }
+        
+        // RESET DIMENSIONS FOR DOOR COPY
+        if(lastType === 'door') {
+            clean.w = ''; clean.w_frac = ''; clean.h = ''; clean.h_frac = '';
+            addDoor(clean);
+        } else {
+            addWindow(clean);
+        }
+    }
+
+    function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(performSave, 800); }
+    
+    async function performSave() {
+        const glob = {
+            cust: document.getElementById('cust_name').value,
+            po: document.getElementById('po_num').value,
+            date: document.getElementById('dateField').value,
+            tech: document.getElementById('techSelect').value
+        };
+
+        const items = [];
+        document.querySelectorAll('.measure-card').forEach(card => {
+            const type = card.dataset.type;
+            const imgs = card.querySelectorAll('.photo-preview');
+            const p1 = imgs[0].src.startsWith('data:') ? imgs[0].src : null;
+            const p2 = imgs[1].src.startsWith('data:') ? imgs[1].src : null;
+            const p3 = imgs[2].src.startsWith('data:') ? imgs[2].src : null;
+
+            if(type === 'door') {
+                const inps = card.querySelectorAll('.door-input'); 
+                const checks = card.querySelectorAll('.checklist-item');
+                const getToggleVal = (selIdx, inpIdx) => {
+                    const sel = inps[selIdx]; const inp = inps[inpIdx];
+                    return (sel.style.display === 'none') ? inp.value : sel.value;
+                };
+
+                items.push({
+                    type: 'door',
+                    loc: inps[0].value,
+                    config: getToggleVal(1,2), handing: getToggleVal(3,4),
+                    dim_type: inps[5].value,
+                    w: inps[6].value, w_frac: inps[7].value,
+                    h: inps[8].value, h_frac: inps[9].value,
+                    jamb: getToggleVal(10,11), bore: getToggleVal(12,13),
+                    ext: getToggleVal(14,15), int: getToggleVal(16,17),
+                    l_tile: checks[0].classList.contains('active'),
+                    l_wood: checks[1].classList.contains('active'),
+                    l_cem: checks[2].classList.contains('active'),
+                    l_wsupp: checks[3].classList.contains('active'),
+                    l_custom: inps[18].value,
+                    notes: inps[19].value,
+                    p1, p2, p3
+                });
+            } else {
+                const inps = card.querySelectorAll('.win-input');
+                const mRows = [];
+                card.querySelectorAll('.measure-row').forEach(r => {
+                    mRows.push({
+                        w: r.querySelector('.m-w').value, wf: r.querySelector('.m-wf').value,
+                        h: r.querySelector('.m-h').value, hf: r.querySelector('.m-hf').value
+                    });
+                });
+                const laborArr = [];
+                card.querySelectorAll('.checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
+
+                const getWallVal = () => {
+                    const preset = inps[6]; 
+                    const customWrap = card.querySelector('.wall-custom');
+                    const customWhole = customWrap.querySelector('input');
+                    const customFrac = customWrap.querySelectorAll('select')[0]; 
+                    
+                    if (preset.value && preset.value !== 'Custom') {
+                        const parts = preset.value.split(' ');
+                        return { w: parts[0], f: parts[1] || '' };
+                    } else {
+                        return { w: customWhole.value, f: customFrac.value };
+                    }
+                };
+                
+                const wallVals = getWallVal();
+
+                items.push({
+                    type: 'window',
+                    loc: inps[0].value, floor: inps[1].value, qty: inps[2].value,
+                    mType: inps[3].value, measurements: mRows,
+                    sill: inps[4].value, sill_f: inps[5].value,
+                    tempered: card.querySelector('.temp-check').checked,
+                    wall: wallVals.w, wall_f: wallVals.f,
+                    mat: inps[10].value, frame: inps[11].value,
+                    ext: inps[12].value, int: inps[13].value,
+                    labor: laborArr, customLabor: inps[14].value,
+                    notes: inps[15].value,
+                    p1, p2, p3
+                });
+            }
+        });
+
+        try {
+            await saveToDB('current_job', { global: glob, items: items });
+            saveMsg.classList.remove('error');
+            saveMsg.innerText = "Saved";
+            saveMsg.style.opacity = '1'; 
+            setTimeout(() => saveMsg.style.opacity = '0', 1500);
+        } catch (e) {
+            saveMsg.classList.add('error');
+            saveMsg.innerText = "⚠️ DB ERROR!";
+            saveMsg.style.opacity = '1'; 
+            console.error("Database save failed", e);
+        }
+    }
+
+    async function loadData() {
+        const data = await loadFromDB('current_job');
+        if(!data) { document.getElementById('dateField').valueAsDate = new Date(); renderEmptyState(); return; }
+        try {
+            document.getElementById('cust_name').value = data.global.cust || '';
+            document.getElementById('po_num').value = data.global.po || '';
+            document.getElementById('dateField').value = data.global.date || '';
+            document.getElementById('techSelect').value = data.global.tech || '';
+            container.innerHTML = '';
+            if(data.items && data.items.length > 0) {
+                data.items.forEach(item => { if(item.type === 'door') addDoor(item); else addWindow(item); });
+            } else { renderEmptyState(); }
+        } catch(e) { console.error(e); renderEmptyState(); }
+    }
+
+    // --- PDF GENERATION (Native Sharing) ---
+    function downloadPDF() {
+        const custName = document.getElementById('cust_name').value.trim();
+        const poNum = document.getElementById('po_num').value.trim();
+        
+        let filename = (custName || "Measure_Sheet").replace(/[^a-z0-9-_ ]/gi, '_');
+        if(poNum) filename += " - " + poNum.replace(/[^a-z0-9-_ ]/gi, '_');
+        filename += ".pdf";
+
+        // Inject Tech Info
+        const techName = document.getElementById('techSelect').value;
+        const techData = techDatabase[techName] || { phone: "", email: "" };
+        const techInfoDiv = document.getElementById('pdf-tech-info');
+        
+        if(techData.phone || techData.email) {
+            techInfoDiv.innerHTML = `
+                <div style="margin-top:5px;"><strong>Contact:</strong> ${techData.phone}</div>
+                <div><strong>Email:</strong> ${techData.email}</div>
+            `;
+        } else {
+            techInfoDiv.innerHTML = "";
+        }
+
+        window.scrollTo(0,0);
+        document.body.classList.add('printing-mode');
+        
+        // Sync inputs
+        document.querySelectorAll('textarea').forEach(el => el.innerHTML = el.value);
+        document.querySelectorAll('input').forEach(el => el.setAttribute('value', el.value));
+        document.querySelectorAll('select').forEach(el => {
+            el.querySelectorAll('option').forEach(o => {
+                if(o.value == el.value) o.setAttribute('selected','selected');
+                else o.removeAttribute('selected');
+            });
+        });
+
+        const btn = document.getElementById('pdfBtn');
+        const oldText = btn.innerText;
+        btn.innerText = "Generating...";
+
+        // Use worker output to get Blob for Sharing
+        html2pdf().set({
+            margin: [10,10,10,10],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
+            jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] } 
+        }).from(document.getElementById('pdf-content')).toPdf().output('blob').then(function(blob) {
+            
+            // CLEANUP: Reset tech info visibility so it doesn't show on screen
+            techInfoDiv.innerHTML = ""; 
+
+            // Attempt Web Share API first
+            const file = new File([blob], filename, { type: "application/pdf" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: filename,
+                }).catch((error) => console.log('Share failed', error));
+            } else {
+                // Fallback to standard download
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+            }
+            
+            // Reset UI
+            document.body.classList.remove('printing-mode');
+            btn.innerText = oldText;
+        });
+    }
+
+    async function startNewJob() {
+        if(confirm("⚠️ Start New Job? This erases current data.")) {
+            if(!db) await initDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).clear();
+            tx.oncomplete = () => location.reload();
+        }
+    }
+
+    // --- PHOTO HANDLING ---
+    function triggerFile(e, box) { 
+        if(e.target.classList.contains('photo-clear')) return; // Ignore if clicking X
+        box.querySelector('input').click(); 
+    }
+    
+    function clearPhoto(e, btn) {
+        e.stopPropagation();
+        const box = btn.closest('.photo-box');
+        box.classList.remove('has-image');
+        box.querySelector('.photo-preview').src = '';
+        box.querySelector('.photo-preview').style.display = 'none';
+        box.querySelector('.photo-placeholder').style.display = 'block';
+        box.querySelector('input').value = ''; // Reset file input
+        triggerSave();
+    }
+
+    function processImage(input) {
+        const file = input.files[0]; if(!file) return;
+        const box = input.parentElement;
+        const img = box.querySelector('.photo-preview');
+        const spin = box.querySelector('.photo-spinner');
+        const place = box.querySelector('.photo-placeholder');
+        place.style.display='none'; spin.style.display='block';
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const temp = new Image();
+            temp.onload = function() {
+                const cvs = document.createElement('canvas');
+                const ctx = cvs.getContext('2d');
+                
+                // HIGHER RESOLUTION: Increased limit to 1200px for clarity
+                const MAX_WIDTH = 1200; 
+                let scale = 1;
+                if(temp.width > MAX_WIDTH) scale = MAX_WIDTH / temp.width;
+                
+                cvs.width = temp.width * scale;
+                cvs.height = temp.height * scale;
+                
+                // Modern browsers inherently preserve rotation during drawImage
+                ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
+                
+                // Bumped quality to 85% since IndexedDB handles size better
+                img.src = cvs.toDataURL('image/jpeg', 0.85); 
+                img.style.display='block'; spin.style.display='none';
+                box.classList.add('has-image'); triggerSave();
+            }
+            temp.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    document.querySelectorAll('.save-me').forEach(e => e.addEventListener('input', triggerSave));
+</script>
+</body>
+</html>
