@@ -34,7 +34,7 @@
         background-color: var(--brand-bg);
         margin: 0; padding: 0; 
         padding-top: env(safe-area-inset-top);
-        padding-bottom: 160px; /* Space for footer */
+        padding-bottom: 160px;
         color: #333;
         -webkit-font-smoothing: antialiased;
     }
@@ -63,9 +63,8 @@
     .app-subtitle { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-top: 6px; }
 
     /* =========================================
-       3. UI COMPONENTS (Inputs, Modals, Toasts)
+       3. UI COMPONENTS
        ========================================= */
-    /* Modal */
     .modal-overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
@@ -88,7 +87,6 @@
     .modal-btn.is-window { color: var(--ui-blue); border-color: var(--ui-blue); background: #f0f7ff; }
     .modal-btn.is-window svg { width: 30px; height: 30px; fill: var(--ui-blue); }
 
-    /* Save Toast */
     .save-indicator {
         position: fixed; top: 20px; right: 20px; font-size: 12px; font-weight: 700;
         background: var(--brand-green); color: white; padding: 8px 16px; border-radius: 30px;
@@ -105,8 +103,8 @@
     /* Standard Inputs */
     .section { padding: 25px 20px; border-bottom: 1px solid #f0f0f0; }
     .section-title { font-size: 14px; color: var(--brand-dark); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 15px; margin-top: 10px; }
-    .row { display: flex; gap: 15px; align-items: flex-end; }
-    .col { flex: 1; min-width: 0; }
+    .row { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+    .col { flex: 1; min-width: 120px; }
     label { display: block; margin-top: 18px; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
     
     input:not([type="checkbox"]), select, textarea { 
@@ -117,7 +115,7 @@
     textarea { resize: vertical; min-height: 80px; line-height: 1.4; }
     .sub-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #a0aec0; margin-bottom: 4px; display: block; }
 
-    /* Composite Input (Optimized for Mobile) */
+    /* Composite Input */
     .composite-input { display: flex; align-items: center; width: 100%; }
     .composite-input input { 
         border-top-right-radius: 0; border-bottom-right-radius: 0; 
@@ -159,7 +157,7 @@
     .btn-add-point { background: none; border: 2px dashed #cbd5e0; width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-top: 5px; color: #555; }
 
     /* Photos */
-    .photo-grid { display: flex; gap: 10px; margin-top: 10px; }
+    .photo-grid { display: flex; gap: 10px; margin-top: 20px; }
     .photo-box {
         flex: 1; height: 120px; border: 2px dashed #cbd5e0; border-radius: 10px;
         background-color: #f7fafc; display: flex; align-items: center; justify-content: center;
@@ -172,7 +170,6 @@
     .photo-spinner { display: none; border: 3px solid #f3f3f3; border-top: 3px solid var(--brand-green); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* Photo Clear Button */
     .photo-clear {
         display: none; position: absolute; top: 5px; right: 5px; background: rgba(220, 53, 69, 0.9);
         color: white; border-radius: 50%; width: 26px; height: 26px; text-align: center;
@@ -217,12 +214,10 @@
     /* =========================================
        4. PRINTING MODE (PDF ENGINE)
        ========================================= */
-    /* Basic Page Setup */
     .printing-mode body { background: white; margin: 0; padding: 0 !important; }
     .printing-mode .main-wrapper { padding: 0; width: 750px; margin: 0 auto; }
     .printing-mode .container { box-shadow: none; border: none; border-radius: 0; padding: 0; min-height: auto; }
     
-    /* Hide App UI in PDF */
     .printing-mode .btn-group, .printing-mode .btn-delete, .printing-mode .save-indicator, 
     .printing-mode .undo-btn, .printing-mode .app-header, .printing-mode .btn-add-point, 
     .printing-mode .remove-row, .printing-mode .empty-state, .printing-mode .modal-overlay,
@@ -242,27 +237,23 @@
     .printing-mode .cover-header p { font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 4px; margin-top: 5px; }
     .printing-mode .cover-box { border: 2px solid #333; padding: 25px; border-radius: 8px; background: #fff; margin-bottom: 30px; }
     
-    /* Dynamic Tech Info (Visible only in PDF) */
     .printing-mode .tech-info-print {
         margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;
         font-size: 13px; line-height: 1.6; color: #444; display: block !important;
     }
     .printing-mode .tech-info-print strong { color: var(--brand-dark); }
 
-    /* Measure Cards - ANTI-BLEED CONFIG */
+    /* Measure Cards */
     .printing-mode .measure-card {
         box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; 
-        margin-bottom: 30px;
-        display: block; 
-        page-break-inside: avoid !important; 
-        break-inside: avoid !important;
+        margin-bottom: 30px; display: block; 
+        page-break-inside: avoid !important; break-inside: avoid !important;
     }
     .printing-mode .pdf-brand { 
         display: block; text-align: right; color: #aaa; font-size: 12px; 
         text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
     }
     
-    /* Input Styling for Print */
     .printing-mode label { margin-top: 15px; font-size: 11px; color: #666; text-transform: uppercase; }
     .printing-mode input, .printing-mode select {
         border: none; border-bottom: 1px solid #000; border-radius: 0; padding: 4px 0; 
@@ -270,43 +261,34 @@
     }
     .printing-mode textarea { border: 1px solid #ddd; padding: 10px; font-size: 12px; margin-top: 5px; }
     
-    /* Print Tweaks */
     .printing-mode .composite-input select { width: auto; min-width: 50px; margin-left: 5px; }
     .printing-mode .checklist-container { background: transparent; border: none; padding: 0; margin-top: 10px;}
-    .printing-mode .checklist-item:not(.active) { display: none; }
-    .printing-mode .checklist-item { padding: 2px 0; }
-    .printing-mode .custom-checkbox { border: none; width: auto; background: transparent; margin-right: 8px; }
-    .printing-mode .custom-checkbox:after { content: "☑"; color: black; font-size: 18px; }
+    .printing-mode .checklist-item:not(.active) { display: none !important; }
     
-    /* Print Images - Anti-Distortion Config */
+    /* Checklist Fixes */
+    .printing-mode .checklist-item { display: flex !important; align-items: center; padding: 4px 0; }
+    .printing-mode .custom-checkbox { border: none; width: auto; background: transparent; margin-right: 8px; display: inline-block; }
+    .printing-mode .custom-checkbox:after { content: "☑"; color: black; font-size: 18px; line-height: 1; }
+    .printing-mode .checklist-text { display: inline-block; line-height: 1; margin-top: 2px;}
+    
+    /* Print Images */
     .printing-mode .photo-grid { 
-        display: block; margin-top: 15px; overflow: hidden; white-space: nowrap;
+        display: block; margin-top: 25px; overflow: hidden; white-space: nowrap;
+        page-break-inside: avoid !important;
     }
     .printing-mode .photo-box { 
-        display: inline-block;
-        width: 31%; 
-        height: auto; 
-        min-height: 150px;
-        margin-right: 2%; 
-        vertical-align: top;
-        border: none; 
-        background: transparent;
+        display: inline-block; width: 31%; height: auto; min-height: 150px;
+        margin-right: 2%; vertical-align: top; border: none; background: transparent;
     }
     .printing-mode .photo-box:last-child { margin-right: 0; }
     .printing-mode .photo-box:not(.has-image) { opacity: 0.1; border: 1px dashed #ccc; min-height: 150px; }
-    .printing-mode .photo-preview { 
-        display: block !important; 
-        width: 100%; 
-        height: auto; 
-        max-height: 220px; 
-        object-fit: contain; /* Prevents squashing/stretching */
-    }
+    .printing-mode .photo-preview { display: block !important; width: 100%; height: auto; max-height: 220px; object-fit: contain; }
     
     .printing-mode .tempered-print-only { display: block !important; font-weight: 900; color: var(--alert-red); border: 3px solid var(--alert-red); padding: 10px; text-align: center; margin-top: 20px; font-size: 16px; }
     .printing-mode .win-switch, .printing-mode .slider, .signature-line { display: none; }
     
-    /* Ensure signature line is hidden as requested */
-    .signature-line { display: none !important; } 
+    /* Hide Empty Fields */
+    .printing-mode .hide-in-print { display: none !important; }
 </style>
 </head>
 <body>
@@ -352,7 +334,7 @@
                 <input type="text" class="save-me" placeholder="Enter Customer Name" id="cust_name" autocomplete="off">
                 
                 <div class="row">
-                    <div class="col">
+                    <div class="col print-field-wrapper">
                         <label>PO / Reference #</label>
                         <input type="text" class="save-me" id="po_num" autocomplete="off">
                     </div>
@@ -367,7 +349,7 @@
                         <input type="date" class="save-me" id="dateField">
                     </div>
                     <div class="col">
-                        <label>Measured By</label>
+                        <label>Measured By <span style="color:red">*</span></label>
                          <select class="save-me" id="techSelect">
                             <option value="" disabled selected>Select Tech...</option>
                             <option value="Adem Atis">Adem Atis</option>
@@ -423,7 +405,6 @@
         "Alan Lloyd": { phone: "", email: "" }
     };
 
-    // Prevent accidental tab closure
     window.addEventListener('beforeunload', function (e) { e.preventDefault(); e.returnValue = ''; });
 
     const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
@@ -433,7 +414,7 @@
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
-            request.onerror = (e) => reject("DB Error");
+            request.onerror = () => reject("DB Error");
             request.onsuccess = (e) => { db = e.target.result; resolve(db); };
             request.onupgradeneeded = (e) => {
                 db = e.target.result;
@@ -465,13 +446,11 @@
     // --- INITIALIZATION ---
     window.onload = async function() { 
         await initDB();
-        // Migrate old LocalStorage data if exists
         const oldData = localStorage.getItem('SimplyDoors_Unified_v13');
         if(oldData) {
             try {
                 await saveToDB('current_job', JSON.parse(oldData));
                 localStorage.removeItem('SimplyDoors_Unified_v13');
-                console.log("Migrated data to IndexedDB.");
             } catch(e) { console.error("Migration failed", e); }
         }
         await loadData(); 
@@ -511,7 +490,7 @@
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
 
         return `
-        <div class="toggle-field-wrapper">
+        <div class="print-field-wrapper toggle-field-wrapper">
             <label>${label}</label>
             <div class="toggle-wrapper">
                 <select class="save-me-dynamic door-input" style="${selStyle}" onchange="checkCustom(this)">${optsHtml}</select>
@@ -541,7 +520,7 @@
         triggerSave();
     }
 
-    // --- WINDOW WALL THICK TOGGLE (Smart Composite) ---
+    // --- WINDOW WALL THICK TOGGLE ---
     function renderWallThickField(valWhole, valFrac) {
         const presets = ["4 9/16", "6 9/16", "3 1/2", "5 1/2"];
         const currentCombined = (valWhole && valFrac) ? `${valWhole} ${valFrac}` : valWhole;
@@ -558,7 +537,7 @@
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
 
         return `
-        <div class="wall-thick-wrapper">
+        <div class="print-field-wrapper wall-thick-wrapper">
             <label>Wall Thick</label>
             <select class="wall-preset save-me-dynamic win-input" style="${selStyle}" onchange="toggleWallThick(this)">${optsHtml}</select>
             <div class="composite-input wall-custom" style="${inpStyle}">
@@ -614,8 +593,10 @@
                 <button class="btn-delete" onclick="deleteItem('${id}')">×</button>
             </div>
             
-            <label>Location Name</label>
-            <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
+            <div class="print-field-wrapper">
+                <label>Location Name</label>
+                <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
+            </div>
             
             <div class="row">
                 <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
@@ -624,7 +605,7 @@
 
             <label>Dimensions</label>
             <div class="row">
-                <div class="col" style="flex: 1.2;">
+                <div class="col print-field-wrapper" style="flex: 1.2;">
                     <span class="sub-label">Type</span>
                     <select class="save-me-dynamic door-input">
                         <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
@@ -632,14 +613,14 @@
                         <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
                     </select>
                 </div>
-                <div class="col" style="flex: 2;">
+                <div class="col print-field-wrapper" style="flex: 2;">
                     <span class="sub-label">Width</span>
                     <div class="composite-input">
                         <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
                         <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
                     </div>
                 </div>
-                <div class="col" style="flex: 2;">
+                <div class="col print-field-wrapper" style="flex: 2;">
                     <span class="sub-label">Height</span>
                     <div class="composite-input">
                         <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
@@ -657,16 +638,21 @@
                 <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
             </div>
 
-            <label>Labor Required</label>
-            <div class="checklist-container">
-                <div class="checklist-item ${vals.l_tile?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Tile</span></div>
-                <div class="checklist-item ${vals.l_wood?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Wood</span></div>
-                <div class="checklist-item ${vals.l_cem?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cement Support</span></div>
-                <div class="checklist-item ${vals.l_wsupp?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Wood Support</span></div>
-                <input type="text" class="save-me-dynamic door-input" placeholder="Custom Labor..." value="${vals.l_custom}" style="margin-top:8px;">
+            <div class="print-field-wrapper">
+                <label>Labor Required</label>
+                <div class="checklist-container">
+                    <div class="checklist-item ${vals.l_tile?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Tile</span></div>
+                    <div class="checklist-item ${vals.l_wood?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Wood</span></div>
+                    <div class="checklist-item ${vals.l_cem?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cement Support</span></div>
+                    <div class="checklist-item ${vals.l_wsupp?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Wood Support</span></div>
+                    <input type="text" class="save-me-dynamic door-input" placeholder="Custom Labor..." value="${vals.l_custom}" style="margin-top:8px;">
+                </div>
             </div>
 
-            <label>Notes</label><textarea class="save-me-dynamic door-input">${vals.notes}</textarea>
+            <div class="print-field-wrapper">
+                <label>Notes</label><textarea class="save-me-dynamic door-input">${vals.notes}</textarea>
+            </div>
+
             <div class="photo-grid">
                 ${renderPhotoBox(1, vals.p1)}
                 ${renderPhotoBox(2, vals.p2)}
@@ -696,27 +682,29 @@
             </div>
 
             <div class="row">
-                <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
-                <div class="col"><label>Floor</label><select class="save-me-dynamic win-input">
+                <div class="col print-field-wrapper" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
+                <div class="col print-field-wrapper"><label>Floor</label><select class="save-me-dynamic win-input">
                     <option ${vals.floor==='1st'?'selected':''}>1st</option>
                     <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
                     <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
                 </select></div>
-                <div class="col" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
+                <div class="col print-field-wrapper" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
             </div>
 
-            <label>Measure Points</label>
-            <select class="save-me-dynamic win-input" style="margin-bottom:10px;">
-                <option value="" disabled ${vals.mType===''?'selected':''}>Basis (RO/Unit/DO)...</option>
-                <option ${vals.mType==='Rough Opening'?'selected':''}>Rough Opening</option>
-                <option ${vals.mType==='Unit Size'?'selected':''}>Unit Size</option>
-                <option ${vals.mType==='Daylight'?'selected':''}>Daylight</option>
-            </select>
-            <div class="measure-rows-container" id="rows_${id}"></div>
-            <button type="button" class="btn-add-point" onclick="addMeasureRow('${id}')">+ Add Point</button>
+            <div class="print-field-wrapper">
+                <label>Measure Points</label>
+                <select class="save-me-dynamic win-input" style="margin-bottom:10px;">
+                    <option value="" disabled ${vals.mType===''?'selected':''}>Basis (RO/Unit/DO)...</option>
+                    <option ${vals.mType==='Rough Opening'?'selected':''}>Rough Opening</option>
+                    <option ${vals.mType==='Unit Size'?'selected':''}>Unit Size</option>
+                    <option ${vals.mType==='Daylight'?'selected':''}>Daylight</option>
+                </select>
+                <div class="measure-rows-container" id="rows_${id}"></div>
+                <button type="button" class="btn-add-point" onclick="addMeasureRow('${id}')">+ Add Point</button>
+            </div>
 
             <div class="row">
-                <div class="col">
+                <div class="col print-field-wrapper">
                     <label>Floor to Sill</label>
                     <div class="composite-input">
                         <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
@@ -739,12 +727,12 @@
             </div>
 
             <div class="row">
-                <div class="col"><label>Material</label><select class="save-me-dynamic win-input">
+                <div class="col print-field-wrapper"><label>Material</label><select class="save-me-dynamic win-input">
                     <option value="" ${vals.mat===''?'selected':''}>Select...</option>
                     <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
                     <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
                 </select></div>
-                <div class="col"><label>Frame Depth</label><select class="save-me-dynamic win-input">
+                <div class="col print-field-wrapper"><label>Frame Depth</label><select class="save-me-dynamic win-input">
                     <option value="" ${vals.frame===''?'selected':''}>Select...</option>
                     <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
                     <option ${vals.frame==='6"'?'selected':''}>6"</option>
@@ -752,27 +740,31 @@
             </div>
             
             <div class="row">
-                <div class="col"><label>Ext Trim</label><select class="save-me-dynamic win-input">
+                <div class="col print-field-wrapper"><label>Ext Trim</label><select class="save-me-dynamic win-input">
                     <option value="" ${vals.ext===''?'selected':''}>Select...</option>
                     <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
                     <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
                 </select></div>
-                <div class="col"><label>Int Trim</label><select class="save-me-dynamic win-input">
+                <div class="col print-field-wrapper"><label>Int Trim</label><select class="save-me-dynamic win-input">
                     <option value="" ${vals.int===''?'selected':''}>Select...</option>
                     <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
                     <option ${vals.int==='Casing'?'selected':''}>Casing</option>
                 </select></div>
             </div>
 
-            <label>Labor Required</label>
-            <div class="checklist-container">
-                ${renderWinCheck('Cut Sheetrock/Wood', vals.labor)}
-                ${renderWinCheck('Cut Tile/Granite', vals.labor)}
-                ${renderWinCheck('Stucco Removal', vals.labor)}
-                <input type="text" class="save-me-dynamic win-input" placeholder="Custom Labor..." value="${vals.customLabor}" style="margin-top:8px;">
+            <div class="print-field-wrapper">
+                <label>Labor Required</label>
+                <div class="checklist-container">
+                    ${renderWinCheck('Cut Sheetrock/Wood', vals.labor)}
+                    ${renderWinCheck('Cut Tile/Granite', vals.labor)}
+                    ${renderWinCheck('Stucco Removal', vals.labor)}
+                    <input type="text" class="save-me-dynamic win-input" placeholder="Custom Labor..." value="${vals.customLabor}" style="margin-top:8px;">
+                </div>
             </div>
 
-            <label>Notes</label><textarea class="save-me-dynamic win-input">${vals.notes}</textarea>
+            <div class="print-field-wrapper">
+                <label>Notes</label><textarea class="save-me-dynamic win-input">${vals.notes}</textarea>
+            </div>
             <div class="photo-grid">
                 ${renderPhotoBox(1, vals.p1)}
                 ${renderPhotoBox(2, vals.p2)}
@@ -806,10 +798,13 @@
     function insertAndInit(html, id, data) {
         container.insertAdjacentHTML('beforeend', html);
         const card = document.getElementById(id);
-        card.querySelectorAll('input, select, textarea').forEach(el => {
+        
+        // Prevent duplicate listener binding by only attaching to new elements within this specific card
+        card.querySelectorAll('.save-me-dynamic').forEach(el => {
             el.addEventListener('input', triggerSave);
             el.addEventListener('change', triggerSave);
         });
+        
         if(!data) { 
             setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150); 
             triggerSave();
@@ -924,7 +919,8 @@
                 card.querySelectorAll('.checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
 
                 const getWallVal = () => {
-                    const preset = inps[6]; 
+                    // CRITICAL FIX: Properly offset by +1 due to the Tempered check box sharing .win-input
+                    const preset = inps[7]; 
                     const customWrap = card.querySelector('.wall-custom');
                     const customWhole = customWrap.querySelector('input');
                     const customFrac = customWrap.querySelectorAll('select')[0]; 
@@ -971,7 +967,16 @@
 
     async function loadData() {
         const data = await loadFromDB('current_job');
-        if(!data) { document.getElementById('dateField').valueAsDate = new Date(); renderEmptyState(); return; }
+        if(!data) { 
+            // Fallback natively formats iOS exact string requirement to YYYY-MM-DD
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            document.getElementById('dateField').value = `${year}-${month}-${day}`;
+            renderEmptyState(); 
+            return; 
+        }
         try {
             document.getElementById('cust_name').value = data.global.cust || '';
             document.getElementById('po_num').value = data.global.po || '';
@@ -984,17 +989,21 @@
         } catch(e) { console.error(e); renderEmptyState(); }
     }
 
-    // --- PDF GENERATION (Native Sharing) ---
+    // --- PDF GENERATION & CLEANUP ---
     function downloadPDF() {
         const custName = document.getElementById('cust_name').value.trim();
+        const techName = document.getElementById('techSelect').value;
         const poNum = document.getElementById('po_num').value.trim();
+        
+        if(!custName || !techName) {
+            alert("⚠️ Please enter a Customer Name and select a Technician before generating the PDF.");
+            return;
+        }
         
         let filename = (custName || "Measure_Sheet").replace(/[^a-z0-9-_ ]/gi, '_');
         if(poNum) filename += " - " + poNum.replace(/[^a-z0-9-_ ]/gi, '_');
         filename += ".pdf";
 
-        // Inject Tech Info
-        const techName = document.getElementById('techSelect').value;
         const techData = techDatabase[techName] || { phone: "", email: "" };
         const techInfoDiv = document.getElementById('pdf-tech-info');
         
@@ -1010,8 +1019,23 @@
         window.scrollTo(0,0);
         document.body.classList.add('printing-mode');
         
-        // Sync inputs
         document.querySelectorAll('textarea').forEach(el => el.innerHTML = el.value);
+        document.querySelectorAll('.print-field-wrapper').forEach(wrapper => {
+            const inputs = wrapper.querySelectorAll('input:not([type="file"]):not([type="checkbox"]), select, textarea');
+            let hasValue = false;
+            inputs.forEach(inp => {
+                if(inp.tagName === 'SELECT') {
+                    if(inp.value && inp.value !== 'Custom' && !inp.options[inp.selectedIndex].disabled) hasValue = true;
+                } else if(inp.value.trim() !== '') {
+                    hasValue = true;
+                }
+            });
+            if(wrapper.querySelector('.checklist-container')) {
+                if(wrapper.querySelector('.checklist-item.active') || wrapper.querySelector('input').value.trim() !== '') hasValue = true;
+            }
+            if(!hasValue) wrapper.classList.add('hide-in-print');
+        });
+
         document.querySelectorAll('input').forEach(el => el.setAttribute('value', el.value));
         document.querySelectorAll('select').forEach(el => {
             el.querySelectorAll('option').forEach(o => {
@@ -1024,7 +1048,6 @@
         const oldText = btn.innerText;
         btn.innerText = "Generating...";
 
-        // Use worker output to get Blob for Sharing
         html2pdf().set({
             margin: [10,10,10,10],
             filename: filename,
@@ -1034,10 +1057,11 @@
             pagebreak: { mode: ['css', 'legacy'] } 
         }).from(document.getElementById('pdf-content')).toPdf().output('blob').then(function(blob) {
             
-            // CLEANUP: Reset tech info visibility so it doesn't show on screen
             techInfoDiv.innerHTML = ""; 
+            document.querySelectorAll('.hide-in-print').forEach(el => el.classList.remove('hide-in-print'));
+            document.body.classList.remove('printing-mode');
+            btn.innerText = oldText;
 
-            // Attempt Web Share API first
             const file = new File([blob], filename, { type: "application/pdf" });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 navigator.share({
@@ -1045,17 +1069,12 @@
                     title: filename,
                 }).catch((error) => console.log('Share failed', error));
             } else {
-                // Fallback to standard download
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
                 a.click();
             }
-            
-            // Reset UI
-            document.body.classList.remove('printing-mode');
-            btn.innerText = oldText;
         });
     }
 
@@ -1070,7 +1089,7 @@
 
     // --- PHOTO HANDLING ---
     function triggerFile(e, box) { 
-        if(e.target.classList.contains('photo-clear')) return; // Ignore if clicking X
+        if(e.target.classList.contains('photo-clear')) return; 
         box.querySelector('input').click(); 
     }
     
@@ -1081,7 +1100,7 @@
         box.querySelector('.photo-preview').src = '';
         box.querySelector('.photo-preview').style.display = 'none';
         box.querySelector('.photo-placeholder').style.display = 'block';
-        box.querySelector('input').value = ''; // Reset file input
+        box.querySelector('input').value = ''; 
         triggerSave();
     }
 
@@ -1100,7 +1119,6 @@
                 const cvs = document.createElement('canvas');
                 const ctx = cvs.getContext('2d');
                 
-                // HIGHER RESOLUTION: Increased limit to 1200px for clarity
                 const MAX_WIDTH = 1200; 
                 let scale = 1;
                 if(temp.width > MAX_WIDTH) scale = MAX_WIDTH / temp.width;
@@ -1108,10 +1126,8 @@
                 cvs.width = temp.width * scale;
                 cvs.height = temp.height * scale;
                 
-                // Modern browsers inherently preserve rotation during drawImage
                 ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
                 
-                // Bumped quality to 85% since IndexedDB handles size better
                 img.src = cvs.toDataURL('image/jpeg', 0.85); 
                 img.style.display='block'; spin.style.display='none';
                 box.classList.add('has-image'); triggerSave();
