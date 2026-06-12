@@ -243,12 +243,16 @@
     }
     .printing-mode .tech-info-print strong { color: var(--brand-dark); }
 
-    /* Measure Cards - Removing Flexbox to fix rendering order */
+    /* Measure Cards - Page Breaks & Layout Fixes */
     .printing-mode .measure-card {
         box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; 
         margin-bottom: 30px; display: block; 
-        page-break-inside: avoid !important; break-inside: avoid !important;
+        page-break-before: always !important; /* Forces new page per card to fix overlapping */
     }
+    .printing-mode .measure-card:first-of-type {
+        page-break-before: auto !important; /* Except the first one after the cover page */
+    }
+    
     .printing-mode .pdf-brand { 
         display: block; text-align: right; color: #aaa; font-size: 12px; 
         text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
@@ -261,20 +265,24 @@
     }
     .printing-mode textarea { border: 1px solid #ddd; padding: 10px; font-size: 12px; margin-top: 5px; }
     
-    /* Layout Overrides for Print Engine */
+    /* Strict Block/Inline-Block Layouts (No Flexbox) */
     .printing-mode .row { display: block !important; width: 100%; margin-bottom: 5px; }
     .printing-mode .col { display: inline-block !important; width: 48%; vertical-align: top; margin-bottom: 5px; }
-    .printing-mode .composite-input select { width: auto; min-width: 50px; margin-left: 5px; }
+    
+    .printing-mode .composite-input { display: inline-block !important; width: 100%; }
+    .printing-mode .composite-input input { display: inline-block !important; width: 40%; }
+    .printing-mode .composite-input select { display: inline-block !important; width: auto; min-width: 50px; margin-left: 5px; }
+    
     .printing-mode .checklist-container { background: transparent; border: none; padding: 0; margin-top: 10px;}
     .printing-mode .checklist-item:not(.active) { display: none !important; }
     
-    /* Solid Inline-Block Alignment for Checkboxes */
+    /* Checkbox Print Alignments */
     .printing-mode .checklist-item { display: block !important; padding: 4px 0; }
     .printing-mode .custom-checkbox { display: inline-block !important; vertical-align: middle; margin-right: 8px; border: none; width: auto; background: transparent; }
     .printing-mode .custom-checkbox:after { content: "☑"; color: black; font-size: 18px; line-height: 1; }
     .printing-mode .checklist-text { display: inline-block !important; vertical-align: middle; line-height: 1; margin-top: 2px;}
     
-    /* Print Images - Locked below content */
+    /* Print Images */
     .printing-mode .photo-grid { 
         display: block !important; margin-top: 25px; overflow: hidden; white-space: nowrap;
     }
@@ -492,7 +500,7 @@
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
 
         return `
-        <div class="toggle-field-wrapper">
+        <div class="print-group toggle-field-wrapper">
             <label>${label}</label>
             <div class="toggle-wrapper">
                 <select class="save-me-dynamic door-input" style="${selStyle}" onchange="checkCustom(this)">${optsHtml}</select>
@@ -539,7 +547,7 @@
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
 
         return `
-        <div class="wall-thick-wrapper">
+        <div class="print-group wall-thick-wrapper">
             <label>Wall Thick</label>
             <select class="wall-preset save-me-dynamic win-input" style="${selStyle}" onchange="toggleWallThick(this)">${optsHtml}</select>
             <div class="composite-input wall-custom" style="${inpStyle}">
@@ -600,53 +608,45 @@
                 <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
             </div>
             
-            <div class="print-group">
-                <div class="row">
-                    <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
-                    <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
-                </div>
+            <div class="row">
+                <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
+                <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
             </div>
 
-            <div class="print-group">
-                <label>Dimensions</label>
-                <div class="row">
-                    <div class="col" style="flex: 1.2;">
-                        <span class="sub-label">Type</span>
-                        <select class="save-me-dynamic door-input">
-                            <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
-                            <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
-                            <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
-                        </select>
+            <label>Dimensions</label>
+            <div class="row">
+                <div class="col print-group" style="flex: 1.2;">
+                    <span class="sub-label">Type</span>
+                    <select class="save-me-dynamic door-input">
+                        <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
+                        <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
+                        <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
+                    </select>
+                </div>
+                <div class="col print-group" style="flex: 2;">
+                    <span class="sub-label">Width</span>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
+                        <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
                     </div>
-                    <div class="col" style="flex: 2;">
-                        <span class="sub-label">Width</span>
-                        <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
-                            <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
-                        </div>
-                    </div>
-                    <div class="col" style="flex: 2;">
-                        <span class="sub-label">Height</span>
-                        <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
-                            <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
-                        </div>
+                </div>
+                <div class="col print-group" style="flex: 2;">
+                    <span class="sub-label">Height</span>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
+                        <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
                     </div>
                 </div>
             </div>
 
-            <div class="print-group">
-                <div class="row">
-                    <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
-                    <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
-                </div>
+            <div class="row">
+                <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
+                <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
             </div>
             
-            <div class="print-group">
-                <div class="row">
-                    <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
-                    <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
-                </div>
+            <div class="row">
+                <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
+                <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
             </div>
 
             <div class="print-group">
@@ -692,16 +692,14 @@
                 <button class="btn-delete" onclick="deleteItem('${id}')">×</button>
             </div>
 
-            <div class="print-group">
-                <div class="row">
-                    <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
-                    <div class="col"><label>Floor</label><select class="save-me-dynamic win-input">
-                        <option ${vals.floor==='1st'?'selected':''}>1st</option>
-                        <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
-                        <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
-                    </select></div>
-                    <div class="col" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
-                </div>
+            <div class="row">
+                <div class="col print-group" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
+                <div class="col print-group"><label>Floor</label><select class="save-me-dynamic win-input">
+                    <option ${vals.floor==='1st'?'selected':''}>1st</option>
+                    <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
+                    <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
+                </select></div>
+                <div class="col print-group" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
             </div>
 
             <div class="print-group">
@@ -716,59 +714,53 @@
                 <button type="button" class="btn-add-point" onclick="addMeasureRow('${id}')">+ Add Point</button>
             </div>
 
-            <div class="print-group">
-                <div class="row">
-                    <div class="col">
-                        <label>Floor to Sill</label>
-                        <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
-                            <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
-                        </div>
+            <div class="row">
+                <div class="col print-group">
+                    <label>Floor to Sill</label>
+                    <div class="composite-input">
+                        <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
+                        <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
                     </div>
-                    <div class="col" style="flex: 0.6;">
-                        <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
-                            <div class="win-toggle-label">Tempered</div>
-                            <label class="win-switch">
-                                <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
-                                <span class="slider"></span>
-                                <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
-                            </label>
-                        </div>
+                </div>
+                <div class="col print-group" style="flex: 0.6;">
+                    <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
+                        <div class="win-toggle-label">Tempered</div>
+                        <label class="win-switch">
+                            <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
+                            <span class="slider"></span>
+                            <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
+                        </label>
                     </div>
-                    <div class="col">
-                        ${renderWallThickField(vals.wall, vals.wall_f)}
-                    </div>
+                </div>
+                <div class="col">
+                    ${renderWallThickField(vals.wall, vals.wall_f)}
                 </div>
             </div>
 
-            <div class="print-group">
-                <div class="row">
-                    <div class="col"><label>Material</label><select class="save-me-dynamic win-input">
-                        <option value="" ${vals.mat===''?'selected':''}>Select...</option>
-                        <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
-                        <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
-                    </select></div>
-                    <div class="col"><label>Frame Depth</label><select class="save-me-dynamic win-input">
-                        <option value="" ${vals.frame===''?'selected':''}>Select...</option>
-                        <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
-                        <option ${vals.frame==='6"'?'selected':''}>6"</option>
-                    </select></div>
-                </div>
+            <div class="row">
+                <div class="col print-group"><label>Material</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.mat===''?'selected':''}>Select...</option>
+                    <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
+                    <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
+                </select></div>
+                <div class="col print-group"><label>Frame Depth</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.frame===''?'selected':''}>Select...</option>
+                    <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
+                    <option ${vals.frame==='6"'?'selected':''}>6"</option>
+                </select></div>
             </div>
             
-            <div class="print-group">
-                <div class="row">
-                    <div class="col"><label>Ext Trim</label><select class="save-me-dynamic win-input">
-                        <option value="" ${vals.ext===''?'selected':''}>Select...</option>
-                        <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
-                        <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
-                    </select></div>
-                    <div class="col"><label>Int Trim</label><select class="save-me-dynamic win-input">
-                        <option value="" ${vals.int===''?'selected':''}>Select...</option>
-                        <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
-                        <option ${vals.int==='Casing'?'selected':''}>Casing</option>
-                    </select></div>
-                </div>
+            <div class="row">
+                <div class="col print-group"><label>Ext Trim</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.ext===''?'selected':''}>Select...</option>
+                    <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
+                    <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
+                </select></div>
+                <div class="col print-group"><label>Int Trim</label><select class="save-me-dynamic win-input">
+                    <option value="" ${vals.int===''?'selected':''}>Select...</option>
+                    <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
+                    <option ${vals.int==='Casing'?'selected':''}>Casing</option>
+                </select></div>
             </div>
 
             <div class="print-group">
@@ -1037,7 +1029,7 @@
         
         document.querySelectorAll('textarea').forEach(el => el.innerHTML = el.value);
         
-        // Hide Empty Groups Logic
+        // Hide Empty Groups Granularly
         document.querySelectorAll('.print-group').forEach(group => {
             const inputs = group.querySelectorAll('input:not([type="file"]):not([type="checkbox"]), select, textarea');
             let hasValue = false;
@@ -1051,7 +1043,6 @@
             });
             
             if(group.querySelector('.checklist-item.active')) hasValue = true;
-            
             if(group.querySelector('.temp-check') && group.querySelector('.temp-check').checked) hasValue = true;
 
             if(!hasValue) group.classList.add('hide-in-print');
