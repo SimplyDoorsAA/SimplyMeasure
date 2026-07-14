@@ -415,7 +415,6 @@
     const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const getFracOpts = (sel) => optsFractions.map(f => `<option value="${f}" ${f===sel?'selected':''}>${f===''?'':f}</option>`).join('');
 
-    // This function is now triggered by Firebase Auth once a user logs in
     window.startAppAfterAuth = async function() { 
         if(isAppInitialized) return;
         isAppInitialized = true;
@@ -837,9 +836,11 @@
         document.querySelectorAll('.measure-card').forEach(card => {
             const type = card.dataset.type;
             const imgs = card.querySelectorAll('.photo-preview');
-            const p1 = imgs[0].src.startsWith('data:') ? imgs[0].src : null;
-            const p2 = imgs[1].src.startsWith('data:') ? imgs[1].src : null;
-            const p3 = imgs[2].src.startsWith('data:') ? imgs[2].src : null;
+            // Safe extraction for both Data URLs (offline fallback) and HTTP URLs (Firebase)
+            const getSrc = (imgEl) => (imgEl.src && imgEl.src !== window.location.href && (imgEl.src.startsWith('data:') || imgEl.src.startsWith('http'))) ? imgEl.src : null;
+            const p1 = getSrc(imgs[0]);
+            const p2 = getSrc(imgs[1]);
+            const p3 = getSrc(imgs[2]);
 
             if(type === 'door') {
                 const getToggleVal = (baseName) => {
@@ -964,6 +965,7 @@
         const btn = document.getElementById('pdfBtn');
         const oldText = btn.innerText; btn.innerText = "Generating...";
 
+        // html2canvas useCORS is critical here so it can load the images from Firebase Storage
         html2pdf().set({
             margin: [10,10,10,10], filename: filename, image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
@@ -998,18 +1000,33 @@
     }
 
     function triggerFile(e, box) { if(e.target.classList.contains('photo-clear')) return; box.querySelector('input').click(); }
+    
+    // Updated to delete image from Firebase Storage if it exists
     function clearPhoto(e, btn) {
         e.stopPropagation(); const box = btn.closest('.photo-box');
-        box.classList.remove('has-image'); box.querySelector('.photo-preview').src = '';
-        box.querySelector('.photo-preview').style.display = 'none'; box.querySelector('.photo-placeholder').style.display = 'block';
-        box.querySelector('input').value = ''; triggerSave();
+        const img = box.querySelector('.photo-preview');
+        const currentSrc = img.src;
+
+        box.classList.remove('has-image'); img.src = '';
+        img.style.display = 'none'; box.querySelector('.photo-placeholder').style.display = 'block';
+        box.querySelector('input').value = ''; 
+        
+        // Tell the Firebase module to delete it to save space
+        if (currentSrc && currentSrc.includes('firebasestorage') && window.deleteImageFromFirebase) {
+            window.deleteImageFromFirebase(currentSrc);
+        }
+
+        triggerSave();
     }
+
+    // Updated to upload the image to Firebase Storage and retrieve the URL
     function processImage(input) {
         const file = input.files[0]; if(!file) return;
         const box = input.parentElement; const img = box.querySelector('.photo-preview');
         const spin = box.querySelector('.photo-spinner'); const place = box.querySelector('.photo-placeholder');
         place.style.display='none'; spin.style.display='block';
         const reader = new FileReader();
+        
         reader.onload = function(e) {
             const temp = new Image();
             temp.onload = function() {
@@ -1018,10 +1035,29 @@
                 if(temp.width > MAX_WIDTH) scale = MAX_WIDTH / temp.width;
                 cvs.width = temp.width * scale; cvs.height = temp.height * scale;
                 ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
-                img.src = cvs.toDataURL('image/jpeg', 0.85); 
-                img.style.display='block'; spin.style.display='none';
-                box.classList.add('has-image'); 
-                cvs.width = 0; cvs.height = 0; triggerSave();
+                
+                // Compress the image data
+                const base64Data = cvs.toDataURL('image/jpeg', 0.85); 
+                
+                // Route through our new Firebase Storage uploader
+                if (window.uploadImageToFirebase) {
+                    window.uploadImageToFirebase(base64Data).then(url => {
+                        img.src = url; 
+                        img.style.display='block'; spin.style.display='none';
+                        box.classList.add('has-image'); 
+                        cvs.width = 0; cvs.height = 0; triggerSave();
+                    }).catch(err => {
+                        console.error("Upload Error", err);
+                        spin.style.display='none'; place.style.display='block';
+                        alert("⚠️ Failed to upload photo to the cloud. Check your connection.");
+                    });
+                } else {
+                    // Offline/Error fallback
+                    img.src = base64Data; 
+                    img.style.display='block'; spin.style.display='none';
+                    box.classList.add('has-image'); 
+                    cvs.width = 0; cvs.height = 0; triggerSave();
+                }
             }
             temp.src = e.target.result;
         };
@@ -1030,33 +1066,22 @@
     
     document.querySelectorAll('.save-me').forEach(e => e.addEventListener('input', triggerSave));
 
-    // Expose HTML onclick functions to global scope for module compatibility
-    window.openModal = openModal;
-    window.closeModal = closeModal;
-    window.selectType = selectType;
-    window.duplicateLast = duplicateLast;
-    window.downloadPDF = downloadPDF;
-    window.startNewJob = startNewJob;
-    window.toggleTempered = toggleTempered;
-    window.addMeasureRow = addMeasureRow;
-    window.toggleCheck = toggleCheck;
-    window.deleteItem = deleteItem;
-    window.checkCustom = checkCustom;
-    window.resetToggle = resetToggle;
-    window.toggleWallThick = toggleWallThick;
-    window.resetWallThick = resetWallThick;
-    window.triggerFile = triggerFile;
-    window.clearPhoto = clearPhoto;
-    window.processImage = processImage;
+    window.openModal = openModal; window.closeModal = closeModal; window.selectType = selectType;
+    window.duplicateLast = duplicateLast; window.downloadPDF = downloadPDF; window.startNewJob = startNewJob;
+    window.toggleTempered = toggleTempered; window.addMeasureRow = addMeasureRow; window.toggleCheck = toggleCheck;
+    window.deleteItem = deleteItem; window.checkCustom = checkCustom; window.resetToggle = resetToggle;
+    window.toggleWallThick = toggleWallThick; window.resetWallThick = resetWallThick; window.triggerFile = triggerFile;
+    window.clearPhoto = clearPhoto; window.processImage = processImage;
 </script>
 
 <!-- =========================================
-     FIREBASE SDK, AUTHENTICATION & FIRESTORE (PHASE 2)
+     FIREBASE SDK, AUTHENTICATION, FIRESTORE & STORAGE (PHASE 3)
      ========================================= -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCobxQaeehIRV6J0RJwG3Qvxl_7IZU4MkI",
@@ -1070,14 +1095,11 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const dbFirestore = getFirestore(app);
+    const storage = getStorage(app);
 
-    // Turn on Offline Persistence!
     enableIndexedDbPersistence(dbFirestore).catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn("Multiple tabs open, offline persistence is only enabled in one tab at a time.");
-        } else if (err.code == 'unimplemented') {
-            console.warn("The current browser does not support offline persistence.");
-        }
+        if (err.code == 'failed-precondition') console.warn("Multiple tabs open, offline persistence is only enabled in one tab at a time.");
+        else if (err.code == 'unimplemented') console.warn("The current browser does not support offline persistence.");
     });
 
     const loginOverlay = document.getElementById('login-overlay');
@@ -1087,13 +1109,33 @@
     const errorDiv = document.getElementById('login-error');
     const btnSignout = document.getElementById('btn-signout');
 
-    // 1. Listen for User Login State
+    // Make Storage functions accessible to the rest of the app
+    window.uploadImageToFirebase = async function(dataUrl) {
+        if (!auth.currentUser) throw new Error("Not logged in");
+        const uid = auth.currentUser.uid;
+        // Create a unique file name in a folder dedicated to this user
+        const fileName = `job_photos/${uid}/${Date.now()}_${Math.floor(Math.random()*10000)}.jpg`;
+        const storageRef = ref(storage, fileName);
+        
+        await uploadString(storageRef, dataUrl, 'data_url');
+        return await getDownloadURL(storageRef);
+    };
+
+    window.deleteImageFromFirebase = async function(url) {
+        try {
+            const fileRef = ref(storage, url);
+            await deleteObject(fileRef);
+            console.log("Old image deleted from cloud.");
+        } catch (e) {
+            console.warn("Could not delete old image", e);
+        }
+    };
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             loginOverlay.style.display = 'none';
             btnSignout.style.display = 'inline-block';
             
-            // Wire the main app save/load functions directly into Firestore using the User's unique ID
             window.saveToDB = async function(data) {
                 if (!auth.currentUser) return;
                 const uid = auth.currentUser.uid;
@@ -1106,11 +1148,8 @@
                 const uid = auth.currentUser.uid;
                 const docRef = doc(dbFirestore, "active_jobs", uid);
                 const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    return docSnap.data();
-                } else {
-                    return null;
-                }
+                if (docSnap.exists()) return docSnap.data();
+                return null;
             };
 
             window.clearDB = async function() {
@@ -1119,7 +1158,6 @@
                 await setDoc(doc(dbFirestore, "active_jobs", uid), {});
             };
 
-            // Trigger the app to load the data from the cloud
             window.startAppAfterAuth(); 
             console.log("Logged in as:", user.email);
         } else {
@@ -1128,7 +1166,6 @@
         }
     });
 
-    // 2. Handle Login Button Click
     btnSignin.addEventListener('click', () => {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
@@ -1148,7 +1185,6 @@
 
     passwordInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') btnSignin.click(); });
 
-    // 3. Handle Logout Button Click
     btnSignout.addEventListener('click', () => {
         signOut(auth).then(() => { location.reload(); }).catch((error) => console.error("Logout Error:", error));
     });
