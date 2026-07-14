@@ -247,10 +247,8 @@
     .printing-mode .measure-card {
         box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; 
         margin-bottom: 30px; display: block; 
-        page-break-before: always !important; /* Forces new page per card to fix overlapping */
-    }
-    .printing-mode .measure-card:first-of-type {
-        page-break-before: auto !important; /* Except the first one after the cover page */
+        /* Let html2pdf avoid-all mode handle the page breaking */
+        page-break-inside: avoid;
     }
     
     .printing-mode .pdf-brand { 
@@ -497,7 +495,7 @@
         </div>`;
     }
 
-    function renderToggleField(label, val, options) {
+    function renderToggleField(label, val, options, fieldName) {
         const isCustom = val && !options.includes(val) && val !== '';
         const selStyle = isCustom ? 'display:none' : 'display:block';
         const inpStyle = isCustom ? 'display:flex' : 'display:none';
@@ -509,9 +507,9 @@
         <div class="print-group toggle-field-wrapper">
             <label>${label}</label>
             <div class="toggle-wrapper">
-                <select class="save-me-dynamic door-input" style="${selStyle}" onchange="checkCustom(this)">${optsHtml}</select>
+                <select class="save-me-dynamic door-input" name="${fieldName}_sel" style="${selStyle}" onchange="checkCustom(this)">${optsHtml}</select>
                 <div class="custom-input-group" style="${inpStyle}">
-                    <input type="text" class="door-input" value="${isCustom ? val : ''}" oninput="triggerSave()">
+                    <input type="text" class="door-input" name="${fieldName}_inp" value="${isCustom ? val : ''}" oninput="triggerSave()">
                     <button type="button" class="undo-btn" onclick="resetToggle(this)">×</button>
                 </div>
             </div>
@@ -555,10 +553,10 @@
         return `
         <div class="print-group wall-thick-wrapper">
             <label>Wall Thick</label>
-            <select class="wall-preset save-me-dynamic win-input" style="${selStyle}" onchange="toggleWallThick(this)">${optsHtml}</select>
+            <select class="wall-preset save-me-dynamic win-input" name="wall_sel" style="${selStyle}" onchange="toggleWallThick(this)">${optsHtml}</select>
             <div class="composite-input wall-custom" style="${inpStyle}">
-                <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${valWhole}" placeholder="0" oninput="triggerSave()">
-                <select class="save-me-dynamic win-input" onchange="triggerSave()">${getFracOpts(valFrac)}</select>
+                <input type="text" inputmode="decimal" name="wall_w" class="save-me-dynamic win-input" value="${valWhole}" placeholder="0" oninput="triggerSave()">
+                <select class="save-me-dynamic win-input" name="wall_f" onchange="triggerSave()">${getFracOpts(valFrac)}</select>
                 <button type="button" class="undo-btn" onclick="resetWallThick(this)" style="margin-left:5px; height:42px; width:40px;">×</button>
             </div>
         </div>`;
@@ -611,13 +609,13 @@
             
             <div class="print-group">
                 <label>Location Name</label>
-                <input type="text" class="save-me-dynamic door-input" placeholder="e.g. Front Entry" value="${vals.loc}">
+                <input type="text" class="save-me-dynamic door-input" name="loc" placeholder="e.g. Front Entry" value="${vals.loc}">
             </div>
             
             <div class="print-group">
                 <div class="row">
-                    <div class="col">${renderToggleField('Config', vals.config, doorConfig)}</div>
-                    <div class="col">${renderToggleField('Handing', vals.handing, doorHanding)}</div>
+                    <div class="col">${renderToggleField('Config', vals.config, doorConfig, 'config')}</div>
+                    <div class="col">${renderToggleField('Handing', vals.handing, doorHanding, 'handing')}</div>
                 </div>
             </div>
 
@@ -626,7 +624,7 @@
                 <div class="row">
                     <div class="col" style="flex: 1.2;">
                         <span class="sub-label">Type</span>
-                        <select class="save-me-dynamic door-input">
+                        <select class="save-me-dynamic door-input" name="dim_type">
                             <option value="" disabled ${vals.dim_type===''?'selected':''}>Select...</option>
                             <option ${vals.dim_type==='Unit Size'?'selected':''}>Unit Size</option>
                             <option ${vals.dim_type==='Rough Opening'?'selected':''}>Rough Opening</option>
@@ -635,15 +633,15 @@
                     <div class="col" style="flex: 2;">
                         <span class="sub-label">Width</span>
                         <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.w}" placeholder='0"'>
-                            <select class="save-me-dynamic door-input">${getFracOpts(vals.w_frac)}</select>
+                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" name="w" value="${vals.w}" placeholder='0"'>
+                            <select class="save-me-dynamic door-input" name="w_frac">${getFracOpts(vals.w_frac)}</select>
                         </div>
                     </div>
                     <div class="col" style="flex: 2;">
                         <span class="sub-label">Height</span>
                         <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" value="${vals.h}" placeholder='0"'>
-                            <select class="save-me-dynamic door-input">${getFracOpts(vals.h_frac)}</select>
+                            <input type="text" inputmode="decimal" class="save-me-dynamic door-input" name="h" value="${vals.h}" placeholder='0"'>
+                            <select class="save-me-dynamic door-input" name="h_frac">${getFracOpts(vals.h_frac)}</select>
                         </div>
                     </div>
                 </div>
@@ -651,31 +649,31 @@
 
             <div class="print-group">
                 <div class="row">
-                    <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'])}</div>
-                    <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'])}</div>
+                    <div class="col">${renderToggleField('Jamb Depth', vals.jamb, ['4 9/16','6 9/16','5 1/4'], 'jamb')}</div>
+                    <div class="col">${renderToggleField('Bore / Lock', vals.bore, ['Single Bore','Double Bore','Mortise','None'], 'bore')}</div>
                 </div>
             </div>
             
             <div class="print-group">
                 <div class="row">
-                    <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'])}</div>
-                    <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'])}</div>
+                    <div class="col">${renderToggleField('Ext Trim', vals.ext, ['Brickmould','1x4','1x6','No Trim'], 'ext')}</div>
+                    <div class="col">${renderToggleField('Int Trim', vals.int, ['2 1/4 Casing','2 1/2 Col. Casing','3 1/4 Casing','1x4','No Trim'], 'int')}</div>
                 </div>
             </div>
 
             <div class="print-group">
                 <label>Labor Required</label>
-                <div class="checklist-container">
+                <div class="checklist-container door-labor-container">
                     <div class="checklist-item ${vals.l_tile?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Tile</span></div>
                     <div class="checklist-item ${vals.l_wood?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cut Wood</span></div>
                     <div class="checklist-item ${vals.l_cem?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Cement Support</span></div>
                     <div class="checklist-item ${vals.l_wsupp?'active':''}" onclick="toggleCheck(this)"><div class="custom-checkbox"></div><span class="checklist-text">Wood Support</span></div>
-                    <input type="text" class="save-me-dynamic door-input" placeholder="Custom Labor..." value="${vals.l_custom}" style="margin-top:8px;">
+                    <input type="text" class="save-me-dynamic door-input" name="l_custom" placeholder="Custom Labor..." value="${vals.l_custom}" style="margin-top:8px;">
                 </div>
             </div>
 
             <div class="print-group">
-                <label>Notes</label><textarea class="save-me-dynamic door-input">${vals.notes}</textarea>
+                <label>Notes</label><textarea class="save-me-dynamic door-input" name="notes">${vals.notes}</textarea>
             </div>
 
             <div class="photo-grid">
@@ -708,19 +706,19 @@
 
             <div class="print-group">
                 <div class="row">
-                    <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" class="save-me-dynamic win-input" value="${vals.loc}"></div>
-                    <div class="col"><label>Floor</label><select class="save-me-dynamic win-input">
+                    <div class="col" style="flex:2"><label>Loc/Mark</label><input type="text" name="loc" class="save-me-dynamic win-input" value="${vals.loc}"></div>
+                    <div class="col"><label>Floor</label><select name="floor" class="save-me-dynamic win-input">
                         <option ${vals.floor==='1st'?'selected':''}>1st</option>
                         <option ${vals.floor==='2nd'?'selected':''}>2nd</option>
                         <option ${vals.floor==='3rd'?'selected':''}>3rd</option>
                     </select></div>
-                    <div class="col" style="flex:0.6"><label>Qty</label><input type="number" class="save-me-dynamic win-input" value="${vals.qty}"></div>
+                    <div class="col" style="flex:0.6"><label>Qty</label><input type="number" name="qty" class="save-me-dynamic win-input" value="${vals.qty}"></div>
                 </div>
             </div>
 
             <div class="print-group">
                 <label>Measure Points</label>
-                <select class="save-me-dynamic win-input" style="margin-bottom:10px;">
+                <select class="save-me-dynamic win-input" name="mType" style="margin-bottom:10px;">
                     <option value="" disabled ${vals.mType===''?'selected':''}>Basis (RO/Unit/DO)...</option>
                     <option ${vals.mType==='Rough Opening'?'selected':''}>Rough Opening</option>
                     <option ${vals.mType==='Unit Size'?'selected':''}>Unit Size</option>
@@ -735,15 +733,15 @@
                     <div class="col">
                         <label>Floor to Sill</label>
                         <div class="composite-input">
-                            <input type="text" inputmode="decimal" class="save-me-dynamic win-input" value="${vals.sill}">
-                            <select class="save-me-dynamic win-input">${getFracOpts(vals.sill_f)}</select>
+                            <input type="text" inputmode="decimal" class="save-me-dynamic win-input" name="sill" value="${vals.sill}">
+                            <select class="save-me-dynamic win-input" name="sill_f">${getFracOpts(vals.sill_f)}</select>
                         </div>
                     </div>
                     <div class="col" style="flex: 0.6;">
                         <div class="win-toggle-wrap ${tempClass}" style="margin-top:18px">
                             <div class="win-toggle-label">Tempered</div>
                             <label class="win-switch">
-                                <input type="checkbox" class="save-me-dynamic win-input temp-check" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
+                                <input type="checkbox" class="save-me-dynamic win-input temp-check" name="tempered" ${vals.tempered?'checked':''} onchange="toggleTempered(this)">
                                 <span class="slider"></span>
                                 <div class="tempered-print-only" style="display:none">TEMPERED: YES</div>
                             </label>
@@ -757,12 +755,12 @@
 
             <div class="print-group">
                 <div class="row">
-                    <div class="col"><label>Material</label><select class="save-me-dynamic win-input">
+                    <div class="col"><label>Material</label><select name="mat" class="save-me-dynamic win-input">
                         <option value="" ${vals.mat===''?'selected':''}>Select...</option>
                         <option ${vals.mat==='Wood Stud'?'selected':''}>Wood Stud</option>
                         <option ${vals.mat==='CMU/Block'?'selected':''}>CMU/Block</option>
                     </select></div>
-                    <div class="col"><label>Frame Depth</label><select class="save-me-dynamic win-input">
+                    <div class="col"><label>Frame Depth</label><select name="frame" class="save-me-dynamic win-input">
                         <option value="" ${vals.frame===''?'selected':''}>Select...</option>
                         <option ${vals.frame==='4-1/2"'?'selected':''}>4-1/2"</option>
                         <option ${vals.frame==='6"'?'selected':''}>6"</option>
@@ -772,12 +770,12 @@
             
             <div class="print-group">
                 <div class="row">
-                    <div class="col"><label>Ext Trim</label><select class="save-me-dynamic win-input">
+                    <div class="col"><label>Ext Trim</label><select name="ext" class="save-me-dynamic win-input">
                         <option value="" ${vals.ext===''?'selected':''}>Select...</option>
                         <option ${vals.ext==='1x4 Vinyl'?'selected':''}>1x4 Vinyl</option>
                         <option ${vals.ext==='No Trim'?'selected':''}>No Trim</option>
                     </select></div>
-                    <div class="col"><label>Int Trim</label><select class="save-me-dynamic win-input">
+                    <div class="col"><label>Int Trim</label><select name="int" class="save-me-dynamic win-input">
                         <option value="" ${vals.int===''?'selected':''}>Select...</option>
                         <option ${vals.int==='Drywall'?'selected':''}>Drywall Return</option>
                         <option ${vals.int==='Casing'?'selected':''}>Casing</option>
@@ -787,16 +785,16 @@
 
             <div class="print-group">
                 <label>Labor Required</label>
-                <div class="checklist-container">
+                <div class="checklist-container win-labor-container">
                     ${renderWinCheck('Cut Sheetrock/Wood', vals.labor)}
                     ${renderWinCheck('Cut Tile/Granite', vals.labor)}
                     ${renderWinCheck('Stucco Removal', vals.labor)}
-                    <input type="text" class="save-me-dynamic win-input" placeholder="Custom Labor..." value="${vals.customLabor}" style="margin-top:8px;">
+                    <input type="text" name="customLabor" class="save-me-dynamic win-input" placeholder="Custom Labor..." value="${vals.customLabor}" style="margin-top:8px;">
                 </div>
             </div>
 
             <div class="print-group">
-                <label>Notes</label><textarea class="save-me-dynamic win-input">${vals.notes}</textarea>
+                <label>Notes</label><textarea name="notes" class="save-me-dynamic win-input">${vals.notes}</textarea>
             </div>
 
             <div class="photo-grid">
@@ -914,32 +912,38 @@
             const p3 = imgs[2].src.startsWith('data:') ? imgs[2].src : null;
 
             if(type === 'door') {
-                const inps = card.querySelectorAll('.door-input'); 
-                const checks = card.querySelectorAll('.checklist-item');
-                const getToggleVal = (selIdx, inpIdx) => {
-                    const sel = inps[selIdx]; const inp = inps[inpIdx];
+                const getToggleVal = (baseName) => {
+                    const sel = card.querySelector(`[name="${baseName}_sel"]`); 
+                    const inp = card.querySelector(`[name="${baseName}_inp"]`);
+                    if (!sel || !inp) return '';
                     return (sel.style.display === 'none') ? inp.value : sel.value;
                 };
 
+                const checks = card.querySelectorAll('.door-labor-container .checklist-item');
+
                 items.push({
                     type: 'door',
-                    loc: inps[0].value,
-                    config: getToggleVal(1,2), handing: getToggleVal(3,4),
-                    dim_type: inps[5].value,
-                    w: inps[6].value, w_frac: inps[7].value,
-                    h: inps[8].value, h_frac: inps[9].value,
-                    jamb: getToggleVal(10,11), bore: getToggleVal(12,13),
-                    ext: getToggleVal(14,15), int: getToggleVal(16,17),
-                    l_tile: checks[0].classList.contains('active'),
-                    l_wood: checks[1].classList.contains('active'),
-                    l_cem: checks[2].classList.contains('active'),
-                    l_wsupp: checks[3].classList.contains('active'),
-                    l_custom: inps[18].value,
-                    notes: inps[19].value,
+                    loc: card.querySelector('[name="loc"]').value,
+                    config: getToggleVal('config'), 
+                    handing: getToggleVal('handing'),
+                    dim_type: card.querySelector('[name="dim_type"]').value,
+                    w: card.querySelector('[name="w"]').value, 
+                    w_frac: card.querySelector('[name="w_frac"]').value,
+                    h: card.querySelector('[name="h"]').value, 
+                    h_frac: card.querySelector('[name="h_frac"]').value,
+                    jamb: getToggleVal('jamb'), 
+                    bore: getToggleVal('bore'),
+                    ext: getToggleVal('ext'), 
+                    int: getToggleVal('int'),
+                    l_tile: checks[0] && checks[0].classList.contains('active'),
+                    l_wood: checks[1] && checks[1].classList.contains('active'),
+                    l_cem: checks[2] && checks[2].classList.contains('active'),
+                    l_wsupp: checks[3] && checks[3].classList.contains('active'),
+                    l_custom: card.querySelector('[name="l_custom"]').value,
+                    notes: card.querySelector('[name="notes"]').value,
                     p1, p2, p3
                 });
             } else {
-                const inps = card.querySelectorAll('.win-input');
                 const mRows = [];
                 card.querySelectorAll('.measure-row').forEach(r => {
                     mRows.push({
@@ -947,21 +951,20 @@
                         h: r.querySelector('.m-h').value, hf: r.querySelector('.m-hf').value
                     });
                 });
+                
                 const laborArr = [];
-                card.querySelectorAll('.checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
+                card.querySelectorAll('.win-labor-container .checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
 
                 const getWallVal = () => {
-                    // SAFER EXTRACTION: Using targeted classes instead of array indexing
-                    const preset = card.querySelector('.wall-preset'); 
-                    const customWrap = card.querySelector('.wall-custom');
-                    const customWhole = customWrap.querySelector('input');
-                    const customFrac = customWrap.querySelectorAll('select')[0]; 
+                    const preset = card.querySelector('[name="wall_sel"]'); 
+                    const customWhole = card.querySelector('[name="wall_w"]');
+                    const customFrac = card.querySelector('[name="wall_f"]'); 
                     
                     if (preset && preset.value && preset.value !== 'Custom') {
                         const parts = preset.value.split(' ');
                         return { w: parts[0], f: parts[1] || '' };
                     } else if(customWhole) {
-                        return { w: customWhole.value, f: customFrac.value };
+                        return { w: customWhole.value, f: customFrac ? customFrac.value : '' };
                     }
                     return { w: '', f: '' };
                 };
@@ -970,15 +973,23 @@
 
                 items.push({
                     type: 'window',
-                    loc: inps[0].value, floor: inps[1].value, qty: inps[2].value,
-                    mType: inps[3].value, measurements: mRows,
-                    sill: inps[4].value, sill_f: inps[5].value,
+                    loc: card.querySelector('[name="loc"]').value, 
+                    floor: card.querySelector('[name="floor"]').value, 
+                    qty: card.querySelector('[name="qty"]').value,
+                    mType: card.querySelector('[name="mType"]').value, 
+                    measurements: mRows,
+                    sill: card.querySelector('[name="sill"]').value, 
+                    sill_f: card.querySelector('[name="sill_f"]').value,
                     tempered: card.querySelector('.temp-check').checked,
-                    wall: wallVals.w, wall_f: wallVals.f,
-                    mat: inps[10].value, frame: inps[11].value,
-                    ext: inps[12].value, int: inps[13].value,
-                    labor: laborArr, customLabor: inps[14].value,
-                    notes: inps[15].value,
+                    wall: wallVals.w, 
+                    wall_f: wallVals.f,
+                    mat: card.querySelector('[name="mat"]').value, 
+                    frame: card.querySelector('[name="frame"]').value,
+                    ext: card.querySelector('[name="ext"]').value, 
+                    int: card.querySelector('[name="int"]').value,
+                    labor: laborArr, 
+                    customLabor: card.querySelector('[name="customLabor"]').value,
+                    notes: card.querySelector('[name="notes"]').value,
                     p1, p2, p3
                 });
             }
@@ -1051,7 +1062,8 @@
         window.scrollTo(0,0);
         document.body.classList.add('printing-mode');
         
-        document.querySelectorAll('textarea').forEach(el => el.innerHTML = el.value);
+        // FIX: XSS / HTML Injection prevention for print output
+        document.querySelectorAll('textarea').forEach(el => el.textContent = el.value);
         
         // Hide Empty Groups Granularly
         document.querySelectorAll('.print-group').forEach(group => {
@@ -1084,13 +1096,14 @@
         const oldText = btn.innerText;
         btn.innerText = "Generating...";
 
+        // FIX: Using html2pdf pagebreak avoid-all configuration to prevent splitting cards in half
         html2pdf().set({
             margin: [10,10,10,10],
             filename: filename,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
             jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] } 
+            pagebreak: { mode: ['css', 'legacy'], avoid: ['.measure-card', '.photo-grid'] } 
         }).from(document.getElementById('pdf-content')).toPdf().output('blob').then(function(blob) {
             
             techInfoDiv.innerHTML = ""; 
@@ -1174,7 +1187,13 @@
                 
                 img.src = cvs.toDataURL('image/jpeg', 0.85); 
                 img.style.display='block'; spin.style.display='none';
-                box.classList.add('has-image'); triggerSave();
+                box.classList.add('has-image'); 
+                
+                // Clear canvas from memory
+                cvs.width = 0; 
+                cvs.height = 0;
+                
+                triggerSave();
             }
             temp.src = e.target.result;
         };
