@@ -46,7 +46,7 @@
     }
 
     /* =========================================
-       2. HEADER
+       2. HEADER & LOGIN OVERLAY
        ========================================= */
     .app-header {
         background: var(--brand-white);
@@ -61,6 +61,31 @@
     .logo-text { font-size: 28px; font-weight: 800; color: var(--brand-dark); display: none; letter-spacing: -0.5px; line-height: 1; }
     .logo-text span { color: var(--brand-green); }
     .app-subtitle { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-top: 6px; }
+
+    .auth-actions { position: absolute; right: 20px; top: calc(20px + env(safe-area-inset-top)); }
+    .auth-actions button { background: none; border: none; color: #666; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; display: none; }
+
+    /* Login Screen */
+    #login-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--brand-bg); z-index: 9999; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .login-box {
+        background: white; padding: 40px 30px; border-radius: 16px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 360px;
+        text-align: center;
+    }
+    .login-box h2 { color: var(--brand-dark); margin: 0 0 5px 0; font-size: 24px; font-weight: 800; }
+    .login-box p { color: #888; font-size: 13px; font-weight: 600; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+    .login-box input { margin-bottom: 15px; width: 100%; }
+    .login-box button {
+        width: 100%; padding: 16px; background: var(--brand-green); color: white;
+        border: none; border-radius: 8px; font-size: 16px; font-weight: 700;
+        cursor: pointer; transition: opacity 0.2s;
+    }
+    .login-box button:active { opacity: 0.8; }
+    #login-error { color: var(--ui-danger); font-size: 13px; font-weight: 600; margin-top: 15px; min-height: 20px; }
 
     /* =========================================
        3. UI COMPONENTS
@@ -223,83 +248,56 @@
     .printing-mode .remove-row, .printing-mode .empty-state, .printing-mode .modal-overlay,
     .printing-mode .photo-clear, .printing-mode .photo-placeholder { display: none !important; }
 
-    /* Cover Page */
     .printing-mode .job-cover-page {
-        display: block; width: 100%; padding: 40px;
-        height: auto; min-height: 90vh;
+        display: block; width: 100%; padding: 40px; height: auto; min-height: 90vh;
         page-break-after: always; break-after: page; border-bottom: none;
     }
-    .printing-mode .cover-header { 
-        text-align: center; margin-bottom: 40px; 
-        border-bottom: 4px solid var(--brand-green); padding-bottom: 20px;
-    }
+    .printing-mode .cover-header { text-align: center; margin-bottom: 40px; border-bottom: 4px solid var(--brand-green); padding-bottom: 20px; }
     .printing-mode .cover-header h1 { font-size: 42px; color: var(--brand-dark); margin: 0; }
     .printing-mode .cover-header p { font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 4px; margin-top: 5px; }
     .printing-mode .cover-box { border: 2px solid #333; padding: 25px; border-radius: 8px; background: #fff; margin-bottom: 30px; }
-    
-    .printing-mode .tech-info-print {
-        margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;
-        font-size: 13px; line-height: 1.6; color: #444; display: block !important;
-    }
+    .printing-mode .tech-info-print { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; font-size: 13px; line-height: 1.6; color: #444; display: block !important; }
     .printing-mode .tech-info-print strong { color: var(--brand-dark); }
-
-    /* Measure Cards - Page Breaks & Layout Fixes */
-    .printing-mode .measure-card {
-        box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; 
-        margin-bottom: 30px; display: block; 
-        /* Let html2pdf avoid-all mode handle the page breaking */
-        page-break-inside: avoid;
-    }
-    
-    .printing-mode .pdf-brand { 
-        display: block; text-align: right; color: #aaa; font-size: 12px; 
-        text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;
-    }
-    
+    .printing-mode .measure-card { box-shadow: none; border: 2px solid #333; margin: 0; padding: 30px; margin-bottom: 30px; display: block; page-break-inside: avoid; }
+    .printing-mode .pdf-brand { display: block; text-align: right; color: #aaa; font-size: 12px; text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     .printing-mode label { margin-top: 15px; font-size: 11px; color: #666; text-transform: uppercase; }
-    .printing-mode input, .printing-mode select {
-        border: none; border-bottom: 1px solid #000; border-radius: 0; padding: 4px 0; 
-        font-weight: 700; font-size: 14px; background: transparent; color: #000; margin-bottom: 5px;
-    }
+    .printing-mode input, .printing-mode select { border: none; border-bottom: 1px solid #000; border-radius: 0; padding: 4px 0; font-weight: 700; font-size: 14px; background: transparent; color: #000; margin-bottom: 5px; }
     .printing-mode textarea { border: 1px solid #ddd; padding: 10px; font-size: 12px; margin-top: 5px; }
     
-    /* Strict Block/Inline-Block Layouts (No Flexbox) */
     .printing-mode .row { display: block !important; width: 100%; margin-bottom: 5px; }
     .printing-mode .col { display: inline-block !important; width: 48%; vertical-align: top; margin-bottom: 5px; }
-    
     .printing-mode .composite-input { display: inline-block !important; width: 100%; }
     .printing-mode .composite-input input { display: inline-block !important; width: 40%; }
     .printing-mode .composite-input select { display: inline-block !important; width: auto; min-width: 50px; margin-left: 5px; }
-    
     .printing-mode .checklist-container { background: transparent; border: none; padding: 0; margin-top: 10px;}
     .printing-mode .checklist-item:not(.active) { display: none !important; }
-    
-    /* Checkbox Print Alignments */
     .printing-mode .checklist-item { display: block !important; padding: 4px 0; }
     .printing-mode .custom-checkbox { display: inline-block !important; vertical-align: middle; margin-right: 8px; border: none; width: auto; background: transparent; }
     .printing-mode .custom-checkbox:after { content: "☑"; color: black; font-size: 18px; line-height: 1; }
     .printing-mode .checklist-text { display: inline-block !important; vertical-align: middle; line-height: 1; margin-top: 2px;}
-    
-    /* Print Images */
-    .printing-mode .photo-grid { 
-        display: block !important; margin-top: 25px; overflow: hidden; white-space: nowrap;
-    }
-    .printing-mode .photo-box { 
-        display: inline-block !important; width: 31%; height: auto; min-height: 150px;
-        margin-right: 2%; vertical-align: top; border: none; background: transparent;
-    }
+    .printing-mode .photo-grid { display: block !important; margin-top: 25px; overflow: hidden; white-space: nowrap; }
+    .printing-mode .photo-box { display: inline-block !important; width: 31%; height: auto; min-height: 150px; margin-right: 2%; vertical-align: top; border: none; background: transparent; }
     .printing-mode .photo-box:last-child { margin-right: 0; }
     .printing-mode .photo-box:not(.has-image) { opacity: 0.1; border: 1px dashed #ccc; min-height: 150px; }
     .printing-mode .photo-preview { display: block !important; width: 100%; height: auto; max-height: 220px; object-fit: contain; }
-    
     .printing-mode .tempered-print-only { display: block !important; font-weight: 900; color: var(--alert-red); border: 3px solid var(--alert-red); padding: 10px; text-align: center; margin-top: 20px; font-size: 16px; }
     .printing-mode .win-switch, .printing-mode .slider, .signature-line { display: none; }
-    
-    /* Dynamic Empty Field Hiding */
     .printing-mode .hide-in-print { display: none !important; }
 </style>
 </head>
 <body>
+
+<!-- PHASE 1: LOGIN OVERLAY -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>SimplyDoors</h2>
+        <p>Field Tech Access</p>
+        <input type="email" id="login-email" placeholder="Email Address" autocomplete="email">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+        <button id="btn-signin">Sign In</button>
+        <div id="login-error"></div>
+    </div>
+</div>
 
 <header class="app-header">
     <div class="logo-container">
@@ -307,6 +305,7 @@
         <div class="logo-text">Simply<span>Doors</span></div>
     </div>
     <div class="app-subtitle">SimplyDoors Measure App</div>
+    <div class="auth-actions"><button id="btn-signout">Sign Out</button></div>
 </header>
 
 <div class="save-indicator" id="saveMsg">Saved</div>
@@ -390,19 +389,20 @@
     <button type="button" class="action-btn btn-reset" onclick="startNewJob()">Start New Job</button>
 </div>
 
+<!-- =========================================
+     APP LOGIC SCRIPT
+     ========================================= -->
 <script>
-    // --- CONFIG & STATE ---
     const container = document.getElementById('measure-container');
     const saveMsg = document.getElementById('saveMsg');
     const modal = document.getElementById('typeModal');
     
-    // DB Configuration
     const DB_NAME = 'SimplyDoorsDB';
     const STORE_NAME = 'jobs';
     let db;
     let saveTimeout;
+    let isAppInitialized = false;
 
-    // --- TECH CONTACT DATABASE ---
     const techDatabase = {
         "Adem Atis": { phone: "210-870-9083", email: "adem@simplydoors.com" },
         "Damian Azpurua": { phone: "(726) 437-5380", email: "DamianAzpuruausa@gmail.com" },
@@ -418,12 +418,11 @@
     const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const getFracOpts = (sel) => optsFractions.map(f => `<option value="${f}" ${f===sel?'selected':''}>${f===''?'':f}</option>`).join('');
 
-    // --- INDEXEDDB WRAPPER & SAFARI PRIVATE MODE SAFEGUARD ---
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
             request.onerror = (e) => {
-                alert("⚠️ Storage Blocked! If you are using Safari Private Browsing, you must switch to normal mode to save measurements and photos.");
+                alert("⚠️ Storage Blocked! If using Safari Private Browsing, switch to normal mode.");
                 reject("DB Error");
             };
             request.onsuccess = (e) => { db = e.target.result; resolve(db); };
@@ -456,10 +455,12 @@
         });
     }
 
-    // --- INITIALIZATION ---
-    window.onload = async function() { 
-        try { await initDB(); } catch(e) { console.error(e); }
+    // This function is now triggered by Firebase Auth once a user logs in
+    window.startAppAfterAuth = async function() { 
+        if(isAppInitialized) return;
+        isAppInitialized = true;
         
+        try { await initDB(); } catch(e) { console.error(e); }
         const oldData = localStorage.getItem('SimplyDoors_Unified_v13');
         if(oldData && db) {
             try {
@@ -470,7 +471,6 @@
         await loadData(); 
     };
 
-    // --- MODAL HANDLING ---
     function openModal() { modal.style.display = 'flex'; }
     function closeModal(e) { if(e.target === modal) modal.style.display = 'none'; }
     function selectType(type) {
@@ -479,7 +479,6 @@
         else addWindow();
     }
 
-    // --- RENDER HELPERS ---
     function renderPhotoBox(num, dataUrl) {
         const hasImg = dataUrl ? 'has-image' : '';
         const imgSrc = dataUrl || '';
@@ -502,7 +501,6 @@
         let optsHtml = '<option value="" disabled selected>Select...</option>';
         options.forEach(opt => { optsHtml += `<option ${(opt === val) ? 'selected' : ''}>${opt}</option>`; });
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
-
         return `
         <div class="print-group toggle-field-wrapper">
             <label>${label}</label>
@@ -534,22 +532,18 @@
         triggerSave();
     }
 
-    // --- WINDOW WALL THICK TOGGLE ---
     function renderWallThickField(valWhole, valFrac) {
         const presets = ["4 9/16", "6 9/16", "3 1/2", "5 1/2"];
         const currentCombined = (valWhole && valFrac) ? `${valWhole} ${valFrac}` : valWhole;
         const isCustom = !presets.includes(currentCombined) && (valWhole !== '' || valFrac !== '');
-        
         const selStyle = isCustom ? 'display:none' : 'display:block';
         const inpStyle = isCustom ? 'display:flex' : 'display:none';
-        
         let optsHtml = '<option value="" disabled selected>Select...</option>';
         presets.forEach(p => { 
             const sel = (p === currentCombined) ? 'selected' : '';
             optsHtml += `<option value="${p}" ${sel}>${p}</option>`; 
         });
         optsHtml += `<option value="Custom">Custom (Type...)</option>`;
-
         return `
         <div class="print-group wall-thick-wrapper">
             <label>Wall Thick</label>
@@ -570,7 +564,6 @@
         }
         triggerSave();
     }
-
     function resetWallThick(btn) {
         const wrap = btn.closest('.wall-thick-wrapper');
         const sel = wrap.querySelector('.wall-preset');
@@ -586,7 +579,6 @@
     const doorConfig = ['Single', 'Double', 'Sgl w/ 1 SL', 'Sgl w/ 2 SL'];
     const doorHanding = ['Left Hand Inswing', 'Right Hand Inswing', 'Left Hand Outswing', 'Right Hand Outswing', 'Slider'];
     
-    // --- ADD ITEMS ---
     function addDoor(data = null) {
         if(container.querySelector('.empty-state')) container.innerHTML = '';
         const count = container.querySelectorAll('.measure-card').length + 1;
@@ -830,12 +822,10 @@
     function insertAndInit(html, id, data) {
         container.insertAdjacentHTML('beforeend', html);
         const card = document.getElementById(id);
-        
         card.querySelectorAll('.save-me-dynamic').forEach(el => {
             el.addEventListener('input', triggerSave);
             el.addEventListener('change', triggerSave);
         });
-        
         if(!data) { 
             setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 150); 
             triggerSave();
@@ -843,11 +833,9 @@
     }
 
     function toggleCheck(item) { item.classList.toggle('active'); triggerSave(); }
-    
     function deleteItem(id) {
         if(confirm('Delete this item?')) {
-            document.getElementById(id).remove();
-            renumber();
+            document.getElementById(id).remove(); renumber();
             if(container.querySelectorAll('.measure-card').length === 0) renderEmptyState();
             triggerSave();
         }
@@ -872,25 +860,16 @@
     async function duplicateLast() {
         const cards = container.querySelectorAll('.measure-card');
         if(cards.length === 0) return openModal();
-        
         triggerSave(); 
         const last = cards[cards.length - 1];
         const lastType = last.dataset.type;
-        
         const saved = await loadFromDB('current_job');
         if(!saved || !saved.items || saved.items.length === 0) return;
         const lastData = saved.items[saved.items.length - 1];
-        
         const clean = JSON.parse(JSON.stringify(lastData));
         clean.loc = ''; clean.notes = ''; clean.p1 = null; clean.p2 = null; clean.p3 = null;
-        if(lastType === 'window') { clean.measurements = [{w:'',wf:'',h:'',hf:''}]; }
-        
-        if(lastType === 'door') {
-            clean.w = ''; clean.w_frac = ''; clean.h = ''; clean.h_frac = '';
-            addDoor(clean);
-        } else {
-            addWindow(clean);
-        }
+        if(lastType === 'window') { clean.measurements = [{w:'',wf:'',h:'',hf:''}]; addWindow(clean); }
+        else { clean.w = ''; clean.w_frac = ''; clean.h = ''; clean.h_frac = ''; addDoor(clean); }
     }
 
     function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(performSave, 800); }
@@ -918,94 +897,52 @@
                     if (!sel || !inp) return '';
                     return (sel.style.display === 'none') ? inp.value : sel.value;
                 };
-
                 const checks = card.querySelectorAll('.door-labor-container .checklist-item');
-
                 items.push({
-                    type: 'door',
-                    loc: card.querySelector('[name="loc"]').value,
-                    config: getToggleVal('config'), 
-                    handing: getToggleVal('handing'),
+                    type: 'door', loc: card.querySelector('[name="loc"]').value,
+                    config: getToggleVal('config'), handing: getToggleVal('handing'),
                     dim_type: card.querySelector('[name="dim_type"]').value,
-                    w: card.querySelector('[name="w"]').value, 
-                    w_frac: card.querySelector('[name="w_frac"]').value,
-                    h: card.querySelector('[name="h"]').value, 
-                    h_frac: card.querySelector('[name="h_frac"]').value,
-                    jamb: getToggleVal('jamb'), 
-                    bore: getToggleVal('bore'),
-                    ext: getToggleVal('ext'), 
-                    int: getToggleVal('int'),
-                    l_tile: checks[0] && checks[0].classList.contains('active'),
-                    l_wood: checks[1] && checks[1].classList.contains('active'),
-                    l_cem: checks[2] && checks[2].classList.contains('active'),
-                    l_wsupp: checks[3] && checks[3].classList.contains('active'),
-                    l_custom: card.querySelector('[name="l_custom"]').value,
-                    notes: card.querySelector('[name="notes"]').value,
-                    p1, p2, p3
+                    w: card.querySelector('[name="w"]').value, w_frac: card.querySelector('[name="w_frac"]').value,
+                    h: card.querySelector('[name="h"]').value, h_frac: card.querySelector('[name="h_frac"]').value,
+                    jamb: getToggleVal('jamb'), bore: getToggleVal('bore'), ext: getToggleVal('ext'), int: getToggleVal('int'),
+                    l_tile: checks[0] && checks[0].classList.contains('active'), l_wood: checks[1] && checks[1].classList.contains('active'),
+                    l_cem: checks[2] && checks[2].classList.contains('active'), l_wsupp: checks[3] && checks[3].classList.contains('active'),
+                    l_custom: card.querySelector('[name="l_custom"]').value, notes: card.querySelector('[name="notes"]').value, p1, p2, p3
                 });
             } else {
                 const mRows = [];
                 card.querySelectorAll('.measure-row').forEach(r => {
-                    mRows.push({
-                        w: r.querySelector('.m-w').value, wf: r.querySelector('.m-wf').value,
-                        h: r.querySelector('.m-h').value, hf: r.querySelector('.m-hf').value
-                    });
+                    mRows.push({ w: r.querySelector('.m-w').value, wf: r.querySelector('.m-wf').value, h: r.querySelector('.m-h').value, hf: r.querySelector('.m-hf').value });
                 });
-                
                 const laborArr = [];
                 card.querySelectorAll('.win-labor-container .checklist-item.active .checklist-text').forEach(t => laborArr.push(t.innerText));
-
                 const getWallVal = () => {
                     const preset = card.querySelector('[name="wall_sel"]'); 
                     const customWhole = card.querySelector('[name="wall_w"]');
                     const customFrac = card.querySelector('[name="wall_f"]'); 
-                    
-                    if (preset && preset.value && preset.value !== 'Custom') {
-                        const parts = preset.value.split(' ');
-                        return { w: parts[0], f: parts[1] || '' };
-                    } else if(customWhole) {
-                        return { w: customWhole.value, f: customFrac ? customFrac.value : '' };
-                    }
+                    if (preset && preset.value && preset.value !== 'Custom') { const parts = preset.value.split(' '); return { w: parts[0], f: parts[1] || '' }; } 
+                    else if(customWhole) { return { w: customWhole.value, f: customFrac ? customFrac.value : '' }; }
                     return { w: '', f: '' };
                 };
-                
                 const wallVals = getWallVal();
-
                 items.push({
-                    type: 'window',
-                    loc: card.querySelector('[name="loc"]').value, 
-                    floor: card.querySelector('[name="floor"]').value, 
-                    qty: card.querySelector('[name="qty"]').value,
-                    mType: card.querySelector('[name="mType"]').value, 
-                    measurements: mRows,
-                    sill: card.querySelector('[name="sill"]').value, 
-                    sill_f: card.querySelector('[name="sill_f"]').value,
-                    tempered: card.querySelector('.temp-check').checked,
-                    wall: wallVals.w, 
-                    wall_f: wallVals.f,
-                    mat: card.querySelector('[name="mat"]').value, 
-                    frame: card.querySelector('[name="frame"]').value,
-                    ext: card.querySelector('[name="ext"]').value, 
-                    int: card.querySelector('[name="int"]').value,
-                    labor: laborArr, 
-                    customLabor: card.querySelector('[name="customLabor"]').value,
-                    notes: card.querySelector('[name="notes"]').value,
-                    p1, p2, p3
+                    type: 'window', loc: card.querySelector('[name="loc"]').value, floor: card.querySelector('[name="floor"]').value, 
+                    qty: card.querySelector('[name="qty"]').value, mType: card.querySelector('[name="mType"]').value, measurements: mRows,
+                    sill: card.querySelector('[name="sill"]').value, sill_f: card.querySelector('[name="sill_f"]').value, tempered: card.querySelector('.temp-check').checked,
+                    wall: wallVals.w, wall_f: wallVals.f, mat: card.querySelector('[name="mat"]').value, frame: card.querySelector('[name="frame"]').value,
+                    ext: card.querySelector('[name="ext"]').value, int: card.querySelector('[name="int"]').value, labor: laborArr, customLabor: card.querySelector('[name="customLabor"]').value,
+                    notes: card.querySelector('[name="notes"]').value, p1, p2, p3
                 });
             }
         });
 
         try {
             await saveToDB('current_job', { global: glob, items: items });
-            saveMsg.classList.remove('error');
-            saveMsg.innerText = "Saved";
-            saveMsg.style.opacity = '1'; 
-            setTimeout(() => saveMsg.style.opacity = '0', 1500);
+            saveMsg.classList.remove('error'); saveMsg.innerText = "Saved";
+            saveMsg.style.opacity = '1'; setTimeout(() => saveMsg.style.opacity = '0', 1500);
         } catch (e) {
-            saveMsg.classList.add('error');
-            saveMsg.innerText = "⚠️ DB ERROR!";
-            saveMsg.style.opacity = '1'; 
-            console.error("Database save failed", e);
+            saveMsg.classList.add('error'); saveMsg.innerText = "⚠️ DB ERROR!";
+            saveMsg.style.opacity = '1'; console.error("Database save failed", e);
         }
     }
 
@@ -1013,12 +950,9 @@
         const data = await loadFromDB('current_job');
         if(!data) { 
             const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
+            const year = d.getFullYear(); const month = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0');
             document.getElementById('dateField').value = `${year}-${month}-${day}`;
-            renderEmptyState(); 
-            return; 
+            renderEmptyState(); return; 
         }
         try {
             document.getElementById('cust_name').value = data.global.cust || '';
@@ -1032,16 +966,12 @@
         } catch(e) { console.error(e); renderEmptyState(); }
     }
 
-    // --- PDF GENERATION & CLEANUP ---
     function downloadPDF() {
         const custName = document.getElementById('cust_name').value.trim();
         const techName = document.getElementById('techSelect').value;
         const poNum = document.getElementById('po_num').value.trim();
         
-        if(!custName || !techName) {
-            alert("⚠️ Please enter a Customer Name and select a Technician before generating the PDF.");
-            return;
-        }
+        if(!custName || !techName) { alert("⚠️ Please enter a Customer Name and select a Technician before generating the PDF."); return; }
         
         let filename = (custName || "Measure_Sheet").replace(/[^a-z0-9-_ ]/gi, '_');
         if(poNum) filename += " - " + poNum.replace(/[^a-z0-9-_ ]/gi, '_');
@@ -1049,38 +979,22 @@
 
         const techData = techDatabase[techName] || { phone: "", email: "" };
         const techInfoDiv = document.getElementById('pdf-tech-info');
-        
         if(techData.phone || techData.email) {
-            techInfoDiv.innerHTML = `
-                <div style="margin-top:5px;"><strong>Contact:</strong> ${techData.phone}</div>
-                <div><strong>Email:</strong> ${techData.email}</div>
-            `;
-        } else {
-            techInfoDiv.innerHTML = "";
-        }
+            techInfoDiv.innerHTML = `<div style="margin-top:5px;"><strong>Contact:</strong> ${techData.phone}</div><div><strong>Email:</strong> ${techData.email}</div>`;
+        } else { techInfoDiv.innerHTML = ""; }
 
-        window.scrollTo(0,0);
-        document.body.classList.add('printing-mode');
-        
-        // FIX: XSS / HTML Injection prevention for print output
+        window.scrollTo(0,0); document.body.classList.add('printing-mode');
         document.querySelectorAll('textarea').forEach(el => el.textContent = el.value);
         
-        // Hide Empty Groups Granularly
         document.querySelectorAll('.print-group').forEach(group => {
             const inputs = group.querySelectorAll('input:not([type="file"]):not([type="checkbox"]), select, textarea');
             let hasValue = false;
-            
             inputs.forEach(inp => {
-                if(inp.tagName === 'SELECT') {
-                    if(inp.value && inp.value !== 'Custom' && !inp.options[inp.selectedIndex].disabled) hasValue = true;
-                } else if(inp.value.trim() !== '') {
-                    hasValue = true;
-                }
+                if(inp.tagName === 'SELECT') { if(inp.value && inp.value !== 'Custom' && !inp.options[inp.selectedIndex].disabled) hasValue = true; } 
+                else if(inp.value.trim() !== '') { hasValue = true; }
             });
-            
             if(group.querySelector('.checklist-item.active')) hasValue = true;
             if(group.querySelector('.temp-check') && group.querySelector('.temp-check').checked) hasValue = true;
-
             if(!hasValue) group.classList.add('hide-in-print');
         });
 
@@ -1093,45 +1007,29 @@
         });
 
         const btn = document.getElementById('pdfBtn');
-        const oldText = btn.innerText;
-        btn.innerText = "Generating...";
+        const oldText = btn.innerText; btn.innerText = "Generating...";
 
-        // FIX: Using html2pdf pagebreak avoid-all configuration to prevent splitting cards in half
         html2pdf().set({
-            margin: [10,10,10,10],
-            filename: filename,
-            image: { type: 'jpeg', quality: 0.98 },
+            margin: [10,10,10,10], filename: filename, image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
             jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'], avoid: ['.measure-card', '.photo-grid'] } 
         }).from(document.getElementById('pdf-content')).toPdf().output('blob').then(function(blob) {
-            
             techInfoDiv.innerHTML = ""; 
             document.querySelectorAll('.hide-in-print').forEach(el => el.classList.remove('hide-in-print'));
-            document.body.classList.remove('printing-mode');
-            btn.innerText = oldText;
-
+            document.body.classList.remove('printing-mode'); btn.innerText = oldText;
             const file = new File([blob], filename, { type: "application/pdf" });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    files: [file],
-                    title: filename,
-                }).catch((error) => console.log('Share failed', error));
+                navigator.share({ files: [file], title: filename }).catch((error) => console.log('Share failed', error));
             } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
+                const url = URL.createObjectURL(blob); const a = document.createElement('a');
+                a.href = url; a.download = filename; a.click();
             }
         }).catch(err => {
-            // Error Safeguard if iPad runs out of memory processing PDF
             console.error("PDF Generation Error", err);
             alert("⚠️ Error generating PDF. The device memory may be full or the images are too large. Please restart the app and try again.");
-            techInfoDiv.innerHTML = ""; 
-            document.querySelectorAll('.hide-in-print').forEach(el => el.classList.remove('hide-in-print'));
-            document.body.classList.remove('printing-mode');
-            btn.innerText = oldText;
+            techInfoDiv.innerHTML = ""; document.querySelectorAll('.hide-in-print').forEach(el => el.classList.remove('hide-in-print'));
+            document.body.classList.remove('printing-mode'); btn.innerText = oldText;
         });
     }
 
@@ -1144,56 +1042,31 @@
         }
     }
 
-    // --- PHOTO HANDLING ---
-    function triggerFile(e, box) { 
-        if(e.target.classList.contains('photo-clear')) return; 
-        box.querySelector('input').click(); 
-    }
-    
+    function triggerFile(e, box) { if(e.target.classList.contains('photo-clear')) return; box.querySelector('input').click(); }
     function clearPhoto(e, btn) {
-        e.stopPropagation();
-        const box = btn.closest('.photo-box');
-        box.classList.remove('has-image');
-        box.querySelector('.photo-preview').src = '';
-        box.querySelector('.photo-preview').style.display = 'none';
-        box.querySelector('.photo-placeholder').style.display = 'block';
-        box.querySelector('input').value = ''; 
-        triggerSave();
+        e.stopPropagation(); const box = btn.closest('.photo-box');
+        box.classList.remove('has-image'); box.querySelector('.photo-preview').src = '';
+        box.querySelector('.photo-preview').style.display = 'none'; box.querySelector('.photo-placeholder').style.display = 'block';
+        box.querySelector('input').value = ''; triggerSave();
     }
-
     function processImage(input) {
         const file = input.files[0]; if(!file) return;
-        const box = input.parentElement;
-        const img = box.querySelector('.photo-preview');
-        const spin = box.querySelector('.photo-spinner');
-        const place = box.querySelector('.photo-placeholder');
+        const box = input.parentElement; const img = box.querySelector('.photo-preview');
+        const spin = box.querySelector('.photo-spinner'); const place = box.querySelector('.photo-placeholder');
         place.style.display='none'; spin.style.display='block';
-        
         const reader = new FileReader();
         reader.onload = function(e) {
             const temp = new Image();
             temp.onload = function() {
-                const cvs = document.createElement('canvas');
-                const ctx = cvs.getContext('2d');
-                
-                const MAX_WIDTH = 1200; 
-                let scale = 1;
+                const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
+                const MAX_WIDTH = 1200; let scale = 1;
                 if(temp.width > MAX_WIDTH) scale = MAX_WIDTH / temp.width;
-                
-                cvs.width = temp.width * scale;
-                cvs.height = temp.height * scale;
-                
+                cvs.width = temp.width * scale; cvs.height = temp.height * scale;
                 ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
-                
                 img.src = cvs.toDataURL('image/jpeg', 0.85); 
                 img.style.display='block'; spin.style.display='none';
                 box.classList.add('has-image'); 
-                
-                // Clear canvas from memory
-                cvs.width = 0; 
-                cvs.height = 0;
-                
-                triggerSave();
+                cvs.width = 0; cvs.height = 0; triggerSave();
             }
             temp.src = e.target.result;
         };
@@ -1201,6 +1074,113 @@
     }
     
     document.querySelectorAll('.save-me').forEach(e => e.addEventListener('input', triggerSave));
+
+    // Expose HTML onclick functions to global scope for module compatibility
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.selectType = selectType;
+    window.duplicateLast = duplicateLast;
+    window.downloadPDF = downloadPDF;
+    window.startNewJob = startNewJob;
+    window.toggleTempered = toggleTempered;
+    window.addMeasureRow = addMeasureRow;
+    window.toggleCheck = toggleCheck;
+    window.deleteItem = deleteItem;
+    window.checkCustom = checkCustom;
+    window.resetToggle = resetToggle;
+    window.toggleWallThick = toggleWallThick;
+    window.resetWallThick = resetWallThick;
+    window.triggerFile = triggerFile;
+    window.clearPhoto = clearPhoto;
+    window.processImage = processImage;
+</script>
+
+<!-- =========================================
+     FIREBASE SDK & AUTHENTICATION (PHASE 1)
+     ========================================= -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCobxQaeehIRV6J0RJwG3Qvxl_7IZU4MkI",
+      authDomain: "simplydoors-measure.firebaseapp.com",
+      projectId: "simplydoors-measure",
+      storageBucket: "simplydoors-measure.firebasestorage.app",
+      messagingSenderId: "381360696007",
+      appId: "1:381360696007:web:2fa0cc0aa5bb5a03c46ce2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const loginOverlay = document.getElementById('login-overlay');
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const btnSignin = document.getElementById('btn-signin');
+    const errorDiv = document.getElementById('login-error');
+    const btnSignout = document.getElementById('btn-signout');
+
+    // 1. Listen for User Login State
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // User is signed in
+            loginOverlay.style.display = 'none';
+            btnSignout.style.display = 'inline-block';
+            window.startAppAfterAuth(); // Trigger the local DB load
+            console.log("Logged in as:", user.email);
+        } else {
+            // User is signed out
+            loginOverlay.style.display = 'flex';
+            btnSignout.style.display = 'none';
+        }
+    });
+
+    // 2. Handle Login Button Click
+    btnSignin.addEventListener('click', () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        
+        if(!email || !password) {
+            errorDiv.innerText = "Please enter email and password.";
+            return;
+        }
+
+        btnSignin.innerText = "Loading...";
+        errorDiv.innerText = "";
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                btnSignin.innerText = "Sign In";
+                emailInput.value = "";
+                passwordInput.value = "";
+            })
+            .catch((error) => {
+                btnSignin.innerText = "Sign In";
+                if(error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    errorDiv.innerText = "Invalid email or password.";
+                } else {
+                    errorDiv.innerText = error.message;
+                }
+            });
+    });
+
+    // Allow pressing "Enter" on password field to log in
+    passwordInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            btnSignin.click();
+        }
+    });
+
+    // 3. Handle Logout Button Click
+    btnSignout.addEventListener('click', () => {
+        signOut(auth).then(() => {
+            console.log("Signed out successfully");
+            // Optional: You could wipe the screen data here if you want to be extra secure
+        }).catch((error) => {
+            console.error("Logout Error:", error);
+        });
+    });
 </script>
 </body>
 </html>
