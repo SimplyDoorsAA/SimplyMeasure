@@ -46,7 +46,7 @@
     }
 
     /* =========================================
-       2. HEADER & LOGIN OVERLAY
+       2. HEADER & OVERLAYS
        ========================================= */
     .app-header {
         background: var(--brand-white);
@@ -62,8 +62,10 @@
     .logo-text span { color: var(--brand-green); }
     .app-subtitle { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-top: 6px; }
 
-    .auth-actions { position: absolute; right: 20px; top: calc(20px + env(safe-area-inset-top)); }
-    .auth-actions button { background: none; border: none; color: #666; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; display: none; }
+    .auth-actions { position: absolute; right: 20px; top: calc(20px + env(safe-area-inset-top)); display: flex; gap: 12px; align-items: center; }
+    .auth-actions button { background: none; border: none; color: #666; font-size: 13px; font-weight: 700; cursor: pointer; display: none; }
+    .auth-actions button:hover { color: var(--brand-dark); }
+    #btn-history { color: var(--ui-blue); }
 
     /* Login Screen */
     #login-overlay {
@@ -86,6 +88,22 @@
     }
     .login-box button:active { opacity: 0.8; }
     #login-error { color: var(--ui-danger); font-size: 13px; font-weight: 600; margin-top: 15px; min-height: 20px; }
+
+    /* History Screen */
+    #history-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--brand-bg); z-index: 9998; 
+        display: none; flex-direction: column; padding: calc(20px + env(safe-area-inset-top)) 20px 20px 20px; overflow-y: auto;
+    }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; max-width: 850px; margin-left: auto; margin-right: auto; width: 100%; }
+    .history-header h2 { margin: 0; color: var(--brand-dark); font-size: 22px; font-weight: 800; }
+    .btn-close-history { background: var(--ui-danger); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    #history-list { max-width: 850px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+    .history-card { background: white; padding: 18px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-left: 5px solid var(--brand-green); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: transform 0.1s; }
+    .history-card:active { transform: scale(0.98); }
+    .history-card-title { font-weight: 800; color: var(--brand-dark); font-size: 16px; margin-bottom: 5px; }
+    .history-card-sub { font-size: 12px; font-weight: 600; color: #888; }
+    .history-card-action { color: var(--ui-blue); font-weight: 800; font-size: 14px; }
 
     /* =========================================
        3. UI COMPONENTS
@@ -299,13 +317,25 @@
     </div>
 </div>
 
+<!-- PHASE 4: HISTORY DASHBOARD OVERLAY -->
+<div id="history-overlay">
+    <div class="history-header">
+        <h2>Previous Measures</h2>
+        <button class="btn-close-history" onclick="document.getElementById('history-overlay').style.display='none'">Close</button>
+    </div>
+    <div id="history-list"></div>
+</div>
+
 <header class="app-header">
     <div class="logo-container">
         <img src="logo.png" alt="SimplyDoors" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
         <div class="logo-text">Simply<span>Doors</span></div>
     </div>
     <div class="app-subtitle">SimplyDoors Measure App</div>
-    <div class="auth-actions"><button id="btn-signout">Sign Out</button></div>
+    <div class="auth-actions">
+        <button id="btn-history" onclick="openHistory()">History</button>
+        <button id="btn-signout">Sign Out</button>
+    </div>
 </header>
 
 <div class="save-indicator" id="saveMsg">Saved</div>
@@ -399,6 +429,7 @@
     
     let saveTimeout;
     let isAppInitialized = false;
+    let currentJobId = null;
 
     const techDatabase = {
         "Adem Atis": { phone: "210-870-9083", email: "adem@simplydoors.com" },
@@ -418,6 +449,14 @@
     window.startAppAfterAuth = async function() { 
         if(isAppInitialized) return;
         isAppInitialized = true;
+
+        // Manage Phase 4: Job ID tracking
+        currentJobId = localStorage.getItem('currentJobId');
+        if(!currentJobId) {
+            currentJobId = 'job_' + Date.now();
+            localStorage.setItem('currentJobId', currentJobId);
+        }
+
         await loadData(); 
     };
 
@@ -427,6 +466,11 @@
         modal.style.display = 'none';
         if(type === 'door') addDoor();
         else addWindow();
+    }
+    
+    function openHistory() {
+        document.getElementById('history-overlay').style.display = 'flex';
+        if(window.loadHistoryList) window.loadHistoryList();
     }
 
     function renderPhotoBox(num, dataUrl) {
@@ -813,7 +857,7 @@
         triggerSave(); 
         const last = cards[cards.length - 1];
         const lastType = last.dataset.type;
-        const saved = window.loadFromDB ? await window.loadFromDB() : null;
+        const saved = window.loadFromDB ? await window.loadFromDB(currentJobId) : null;
         if(!saved || !saved.items || saved.items.length === 0) return;
         const lastData = saved.items[saved.items.length - 1];
         const clean = JSON.parse(JSON.stringify(lastData));
@@ -825,6 +869,8 @@
     function triggerSave() { clearTimeout(saveTimeout); saveTimeout = setTimeout(performSave, 800); }
     
     async function performSave() {
+        if(!currentJobId) return;
+
         const glob = {
             cust: document.getElementById('cust_name').value,
             po: document.getElementById('po_num').value,
@@ -836,7 +882,6 @@
         document.querySelectorAll('.measure-card').forEach(card => {
             const type = card.dataset.type;
             const imgs = card.querySelectorAll('.photo-preview');
-            // Safe extraction for both Data URLs (offline fallback) and HTTP URLs (Firebase)
             const getSrc = (imgEl) => (imgEl.src && imgEl.src !== window.location.href && (imgEl.src.startsWith('data:') || imgEl.src.startsWith('http'))) ? imgEl.src : null;
             const p1 = getSrc(imgs[0]);
             const p2 = getSrc(imgs[1]);
@@ -890,7 +935,7 @@
 
         try {
             if (window.saveToDB) {
-                await window.saveToDB({ global: glob, items: items });
+                await window.saveToDB({ global: glob, items: items }, currentJobId);
                 saveMsg.classList.remove('error'); saveMsg.innerText = "Saved to Cloud";
                 saveMsg.style.opacity = '1'; setTimeout(() => saveMsg.style.opacity = '0', 1500);
             }
@@ -900,9 +945,28 @@
         }
     }
 
+    // New helper to repopulate DOM from data
+    window.renderLoadedData = function(data) {
+        document.getElementById('cust_name').value = data.global.cust || '';
+        document.getElementById('po_num').value = data.global.po || '';
+        document.getElementById('dateField').value = data.global.date || '';
+        document.getElementById('techSelect').value = data.global.tech || '';
+        container.innerHTML = '';
+        if(data.items && data.items.length > 0) {
+            data.items.forEach(item => { if(item.type === 'door') addDoor(item); else addWindow(item); });
+        } else { renderEmptyState(); }
+    };
+
+    // New load behavior tailored for specific jobs
+    window.loadSpecificJob = function(jobId, data) {
+        currentJobId = jobId;
+        localStorage.setItem('currentJobId', currentJobId);
+        window.renderLoadedData(data);
+    };
+
     async function loadData() {
         if (!window.loadFromDB) return;
-        const data = await window.loadFromDB();
+        const data = await window.loadFromDB(currentJobId);
         
         if(!data || !data.global) { 
             const d = new Date();
@@ -911,14 +975,7 @@
             renderEmptyState(); return; 
         }
         try {
-            document.getElementById('cust_name').value = data.global.cust || '';
-            document.getElementById('po_num').value = data.global.po || '';
-            document.getElementById('dateField').value = data.global.date || '';
-            document.getElementById('techSelect').value = data.global.tech || '';
-            container.innerHTML = '';
-            if(data.items && data.items.length > 0) {
-                data.items.forEach(item => { if(item.type === 'door') addDoor(item); else addWindow(item); });
-            } else { renderEmptyState(); }
+            window.renderLoadedData(data);
         } catch(e) { console.error(e); renderEmptyState(); }
     }
 
@@ -965,7 +1022,6 @@
         const btn = document.getElementById('pdfBtn');
         const oldText = btn.innerText; btn.innerText = "Generating...";
 
-        // html2canvas useCORS is critical here so it can load the images from Firebase Storage
         html2pdf().set({
             margin: [10,10,10,10], filename: filename, image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
@@ -991,17 +1047,15 @@
     }
 
     async function startNewJob() {
-        if(confirm("⚠️ Start New Job? This erases current data.")) {
-            if (window.clearDB) {
-                await window.clearDB();
-            }
+        if(confirm("⚠️ Start New Job? Your previous job is safely stored in the History tab.")) {
+            // Force a new ID to be generated when the page reloads
+            localStorage.removeItem('currentJobId');
             location.reload();
         }
     }
 
     function triggerFile(e, box) { if(e.target.classList.contains('photo-clear')) return; box.querySelector('input').click(); }
     
-    // Updated to delete image from Firebase Storage if it exists
     function clearPhoto(e, btn) {
         e.stopPropagation(); const box = btn.closest('.photo-box');
         const img = box.querySelector('.photo-preview');
@@ -1011,7 +1065,6 @@
         img.style.display = 'none'; box.querySelector('.photo-placeholder').style.display = 'block';
         box.querySelector('input').value = ''; 
         
-        // Tell the Firebase module to delete it to save space
         if (currentSrc && currentSrc.includes('firebasestorage') && window.deleteImageFromFirebase) {
             window.deleteImageFromFirebase(currentSrc);
         }
@@ -1019,7 +1072,6 @@
         triggerSave();
     }
 
-    // Updated to upload the image to Firebase Storage and retrieve the URL
     function processImage(input) {
         const file = input.files[0]; if(!file) return;
         const box = input.parentElement; const img = box.querySelector('.photo-preview');
@@ -1036,10 +1088,8 @@
                 cvs.width = temp.width * scale; cvs.height = temp.height * scale;
                 ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
                 
-                // Compress the image data
                 const base64Data = cvs.toDataURL('image/jpeg', 0.85); 
                 
-                // Route through our new Firebase Storage uploader
                 if (window.uploadImageToFirebase) {
                     window.uploadImageToFirebase(base64Data).then(url => {
                         img.src = url; 
@@ -1052,7 +1102,6 @@
                         alert("⚠️ Failed to upload photo to the cloud. Check your connection.");
                     });
                 } else {
-                    // Offline/Error fallback
                     img.src = base64Data; 
                     img.style.display='block'; spin.style.display='none';
                     box.classList.add('has-image'); 
@@ -1071,16 +1120,16 @@
     window.toggleTempered = toggleTempered; window.addMeasureRow = addMeasureRow; window.toggleCheck = toggleCheck;
     window.deleteItem = deleteItem; window.checkCustom = checkCustom; window.resetToggle = resetToggle;
     window.toggleWallThick = toggleWallThick; window.resetWallThick = resetWallThick; window.triggerFile = triggerFile;
-    window.clearPhoto = clearPhoto; window.processImage = processImage;
+    window.clearPhoto = clearPhoto; window.processImage = processImage; window.openHistory = openHistory;
 </script>
 
 <!-- =========================================
-     FIREBASE SDK, AUTHENTICATION, FIRESTORE & STORAGE (PHASE 3)
+     FIREBASE SDK, AUTHENTICATION, FIRESTORE & STORAGE (PHASE 4)
      ========================================= -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
     const firebaseConfig = {
@@ -1107,13 +1156,14 @@
     const passwordInput = document.getElementById('login-password');
     const btnSignin = document.getElementById('btn-signin');
     const errorDiv = document.getElementById('login-error');
+    
+    // Auth action buttons header
     const btnSignout = document.getElementById('btn-signout');
+    const btnHistory = document.getElementById('btn-history');
 
-    // Make Storage functions accessible to the rest of the app
     window.uploadImageToFirebase = async function(dataUrl) {
         if (!auth.currentUser) throw new Error("Not logged in");
         const uid = auth.currentUser.uid;
-        // Create a unique file name in a folder dedicated to this user
         const fileName = `job_photos/${uid}/${Date.now()}_${Math.floor(Math.random()*10000)}.jpg`;
         const storageRef = ref(storage, fileName);
         
@@ -1135,27 +1185,71 @@
         if (user) {
             loginOverlay.style.display = 'none';
             btnSignout.style.display = 'inline-block';
+            btnHistory.style.display = 'inline-block';
             
-            window.saveToDB = async function(data) {
-                if (!auth.currentUser) return;
+            // Phase 4: Save jobs to a dedicated Jobs collection based on the Job ID
+            window.saveToDB = async function(data, jobId) {
+                if (!auth.currentUser || !jobId) return;
                 const uid = auth.currentUser.uid;
-                const docRef = doc(dbFirestore, "active_jobs", uid);
+                const docRef = doc(dbFirestore, "users", uid, "jobs", jobId);
                 await setDoc(docRef, data);
             };
 
-            window.loadFromDB = async function() {
-                if (!auth.currentUser) return null;
+            window.loadFromDB = async function(jobId) {
+                if (!auth.currentUser || !jobId) return null;
                 const uid = auth.currentUser.uid;
-                const docRef = doc(dbFirestore, "active_jobs", uid);
+                const docRef = doc(dbFirestore, "users", uid, "jobs", jobId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) return docSnap.data();
                 return null;
             };
 
-            window.clearDB = async function() {
-                if (!auth.currentUser) return;
+            window.loadHistoryList = async function() {
+                if(!auth.currentUser) return;
                 const uid = auth.currentUser.uid;
-                await setDoc(doc(dbFirestore, "active_jobs", uid), {});
+                const listEl = document.getElementById('history-list');
+                listEl.innerHTML = '<div style="text-align:center; color:#888; font-weight:bold; margin-top: 30px;">Loading Archive...</div>';
+                
+                try {
+                    const q = query(collection(dbFirestore, "users", uid, "jobs"));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if(querySnapshot.empty) {
+                        listEl.innerHTML = '<div style="text-align:center; color:#888; margin-top: 30px;">No saved jobs found. Start a new one!</div>';
+                        return;
+                    }
+                    
+                    let jobs = [];
+                    querySnapshot.forEach((doc) => { jobs.push({ id: doc.id, ...doc.data() }); });
+                    
+                    // Sort descending (newest jobs first based on ID timestamp)
+                    jobs.sort((a,b) => b.id.localeCompare(a.id));
+                    
+                    listEl.innerHTML = '';
+                    jobs.forEach(job => {
+                        const cust = job.global?.cust || 'Unnamed Customer';
+                        const date = job.global?.date || 'No Date Available';
+                        const po = job.global?.po ? `PO: ${job.global.po}` : '';
+                        
+                        const card = document.createElement('div');
+                        card.className = "history-card";
+                        card.innerHTML = `
+                            <div>
+                                <div class="history-card-title">${cust}</div>
+                                <div class="history-card-sub">Date: ${date} ${po ? ' | ' + po : ''}</div>
+                            </div>
+                            <div class="history-card-action">Load &rarr;</div>
+                        `;
+                        card.onclick = () => {
+                            window.loadSpecificJob(job.id, job);
+                            document.getElementById('history-overlay').style.display = 'none';
+                        };
+                        listEl.appendChild(card);
+                    });
+                } catch(e) {
+                    console.error(e);
+                    listEl.innerHTML = '<div style="text-align:center; color:red; margin-top: 30px;">Error loading history. Check your connection.</div>';
+                }
             };
 
             window.startAppAfterAuth(); 
@@ -1163,6 +1257,7 @@
         } else {
             loginOverlay.style.display = 'flex';
             btnSignout.style.display = 'none';
+            btnHistory.style.display = 'none';
         }
     });
 
