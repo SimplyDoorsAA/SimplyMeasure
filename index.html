@@ -200,9 +200,9 @@
     .btn-add-point { background: none; border: 2px dashed #cbd5e0; width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-top: 5px; color: #555; }
 
     /* Photos */
-    .photo-grid { display: flex; gap: 10px; margin-top: 20px; }
+    .photo-grid { display: flex; gap: 10px; margin-top: 20px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; }
     .photo-box {
-        flex: 1; height: 120px; border: 2px dashed #cbd5e0; border-radius: 10px;
+        flex: 1; min-width: 100px; height: 120px; border: 2px dashed #cbd5e0; border-radius: 10px;
         background-color: #f7fafc; display: flex; align-items: center; justify-content: center;
         cursor: pointer; position: relative; overflow: hidden;
     }
@@ -253,6 +253,15 @@
     .btn-dup { background-color: #6f42c1; } 
     .btn-print { background-color: var(--ui-blue); } 
     .btn-reset { background-color: var(--ui-danger); flex-basis: 100%; margin-top: 5px; opacity: 0.9; font-size: 13px; padding: 12px; }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 768px) {
+        .row { flex-direction: column; align-items: stretch; gap: 0; }
+        .col { width: 100%; margin-bottom: 10px; }
+        .win-toggle-wrap { align-items: flex-start; margin-top: 10px !important; }
+        .photo-box { height: 100px; }
+        .measure-card { padding: 15px; }
+    }
 
     /* =========================================
        4. PRINTING MODE (PDF ENGINE)
@@ -423,6 +432,18 @@
      APP LOGIC SCRIPT
      ========================================= -->
 <script>
+    // Embedded Service Worker for offline HTML caching (PWA logic)
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'simplydoors-cache-v2';
+            self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.pathname]))); self.skipWaiting(); });
+            self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => { if (k !== CACHE_NAME) return caches.delete(k); })))); self.clients.claim(); });
+            self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });
+        `;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log('SW Registration failed', err));
+    }
+
     const container = document.getElementById('measure-container');
     const saveMsg = document.getElementById('saveMsg');
     const modal = document.getElementById('typeModal');
@@ -442,6 +463,11 @@
     };
 
     window.addEventListener('beforeunload', function (e) { e.preventDefault(); e.returnValue = ''; });
+    
+    // Background Save Hook (Crucial to prevent data loss on device lock/tab switch)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') performSave();
+    });
 
     const optsFractions = ['', '1/8', '1/4', '3/8', '1/2', '5/8', '3/4', '7/8'];
     const getFracOpts = (sel) => optsFractions.map(f => `<option value="${f}" ${f===sel?'selected':''}>${f===''?'':f}</option>`).join('');
@@ -450,7 +476,6 @@
         if(isAppInitialized) return;
         isAppInitialized = true;
 
-        // Manage Phase 4: Job ID tracking
         currentJobId = localStorage.getItem('currentJobId');
         if(!currentJobId) {
             currentJobId = 'job_' + Date.now();
@@ -945,7 +970,6 @@
         }
     }
 
-    // New helper to repopulate DOM from data
     window.renderLoadedData = function(data) {
         document.getElementById('cust_name').value = data.global.cust || '';
         document.getElementById('po_num').value = data.global.po || '';
@@ -957,7 +981,6 @@
         } else { renderEmptyState(); }
     };
 
-    // New load behavior tailored for specific jobs
     window.loadSpecificJob = function(jobId, data) {
         currentJobId = jobId;
         localStorage.setItem('currentJobId', currentJobId);
@@ -1048,7 +1071,6 @@
 
     async function startNewJob() {
         if(confirm("⚠️ Start New Job? Your previous job is safely stored in the History tab.")) {
-            // Force a new ID to be generated when the page reloads
             localStorage.removeItem('currentJobId');
             location.reload();
         }
@@ -1083,12 +1105,14 @@
             const temp = new Image();
             temp.onload = function() {
                 const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
-                const MAX_WIDTH = 1200; let scale = 1;
+                // Downscaled to 800px max width for crash prevention on iOS during PDF generation
+                const MAX_WIDTH = 800; let scale = 1;
                 if(temp.width > MAX_WIDTH) scale = MAX_WIDTH / temp.width;
                 cvs.width = temp.width * scale; cvs.height = temp.height * scale;
                 ctx.drawImage(temp, 0, 0, cvs.width, cvs.height);
                 
-                const base64Data = cvs.toDataURL('image/jpeg', 0.85); 
+                // Aggressive JPEG compression to prevent DOM bloating
+                const base64Data = cvs.toDataURL('image/jpeg', 0.60); 
                 
                 if (window.uploadImageToFirebase) {
                     window.uploadImageToFirebase(base64Data).then(url => {
